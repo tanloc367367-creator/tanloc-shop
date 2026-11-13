@@ -11,7 +11,7 @@ const SECRET = 'tanloc_shop_secret_2024_doi_thanh_chuoi_that_dai';
 // ==========================================
 // ⚠️ BẠN HÃY THAY THÔNG TIN CỦA BẠN VÀO 4 DÒNG DƯỚI ĐÂY
 // ==========================================
-const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io';
+const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io' ;
 const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ1NzU3MzUsImlkIjoiMDFhMWQyZTItZjYwMS03NjdkLWIzMzItYWRlNjM5NjU2ZWZhIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIwOWU3NmM5LWIwOTUtNGY1ZS05OTk1LThiMmJiOTc2ODVhZSJ9.B3bGSZd1bepfuyB1F8eoKCzIEt7Z0ZOeeT9kSERp08CWRi3kNp-Llq2k0x3ZaAqApbdHf5YNcak3mpR9e335Aw';
 const TELEGRAM_TOKEN = '9118571174:AAFeWYqBev6303qPCx0d-2J-cDE4sU92ke8';
 const TELEGRAM_CHAT_ID = '8240363472';
