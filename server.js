@@ -6,59 +6,48 @@ const cookieParser = require('cookie-parser');
 const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
-const SECRET = 'tanloc_shop_secret_2024_doi_thanh_chuoi_that_dai';
+const SECRET = 'tanloc_shop_secret_2024';
 
-// ==========================================
-// ⚠️ BẠN HÃY THAY THÔNG TIN CỦA BẠN VÀO 4 DÒNG DƯỚI ĐÂY
-// ==========================================
+// ĐIỀN THÔNG TIN CỦA BẠN VÀO ĐÂY
 const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io';
-const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ1NzU3MzUsImlkIjoiMDFhMWQyZTItZjYwMS03NjdkLWIzMzItYWRlNjM5NjU2ZWZhIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIwOWU3NmM5LWIwOTUtNGY1ZS05OTk1LThiMmJiOTc2ODVhZSJ9.B3bGSZd1bepfuyB1F8eoKCzIEt7Z0ZOeeT9kSERp08CWRi3kNp-Llq2k0x3ZaAqApbdHf5YNcak3mpR9e335Aw';
+const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ1ODQwMDksImlkIjoiMDFhMWQyZTItZjYwMS03NjdkLWIzMzItYWRlNjM5NjU2ZWZhIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIwOWU3NmM5LWIwOTUtNGY1ZS05OTk1LThiMmJiOTc2ODVhZSJ9.RXBc6h6XeblSrMzkysFVsodIK9hzWDWm6KJv32_jSNFjfQ0Bgc1cOtk15nGFjtw-le1eKlAXbRXyBvzJ8Dq-Ag';
 const TELEGRAM_TOKEN = '9118571174:AAFeWYqBev6303qPCx0d-2J-cDE4sU92ke8';
 const TELEGRAM_CHAT_ID = '8240363472';
-// ==========================================
 
 const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A', bankName: 'MB Bank' };
 
-const db = createClient({
-  url: TURSO_URL,
-  authToken: TURSO_TOKEN,
-});
+const db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 
-// HÀM KHỞI TẠO DATABASE TỰ ĐỘNG
+// Khởi tạo Database
 async function initDB() {
   try {
-    await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, email TEXT UNIQUE, password TEXT, role TEXT DEFAULT 'user', balance INTEGER DEFAULT 0, status TEXT DEFAULT 'active', created_at TEXT);`);
+    await db.execute(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, email TEXT UNIQUE, password TEXT, role TEXT DEFAULT 'user', status TEXT DEFAULT 'active', created_at TEXT);`);
     await db.execute(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, price INTEGER, badge TEXT);`);
     await db.execute(`CREATE TABLE IF NOT EXISTS keys (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, key_value TEXT UNIQUE, sold INTEGER DEFAULT 0, order_id INTEGER);`);
     await db.execute(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, product_id INTEGER, key_id INTEGER, amount INTEGER, payment_code TEXT UNIQUE, status TEXT DEFAULT 'pending', created_at TEXT, paid_at TEXT);`);
     
-    // Tạo Admin mặc định
     const rs = await db.execute("SELECT id FROM users WHERE role='super'");
     if (rs.rows.length === 0) {
       const hash = bcrypt.hashSync('admin123', 10);
       await db.execute({ sql: "INSERT INTO users (username,email,password,role) VALUES (?,?,?,?)", args: ['admin', 'admin@tanlocshop.com', hash, 'super'] });
     }
-  } catch (e) {
-    console.error("LỖI KHỞI TẠO DB:", e.message);
-  }
+  } catch (e) { console.error("LỖI DB:", e.message); }
 }
 initDB();
 
-// HÀM GỬI TELEGRAM
 async function notifyAdmin(message) {
   try {
-    if (TELEGRAM_TOKEN !== 'DÁN_TOKEN_TELEGRAM_VÀO_ĐÂY') {
+    if (TELEGRAM_TOKEN !== 'MÃ_TOKEN_TELEGRAM_CỦA_BẠN') {
       const bot = new TelegramBot(TELEGRAM_TOKEN);
       await bot.sendMessage(TELEGRAM_CHAT_ID, message, { parse_mode: 'HTML' });
     }
-  } catch (e) { console.log('Lỗi gửi Telegram:', e.message); }
+  } catch (e) { console.log('Lỗi Telegram:', e.message); }
 }
 
-// MIDDLEWARE XÁC THỰC
 async function auth(req, res, next) {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: 'Chưa đăng nhập' });
@@ -75,7 +64,6 @@ function adminOnly(req, res, next) {
   next();
 }
 
-// ================= API ĐĂNG KÝ / ĐĂNG NHẬP =================
 app.post('/api/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -83,34 +71,30 @@ app.post('/api/register', async (req, res) => {
     const hash = bcrypt.hashSync(password, 10);
     await db.execute({ sql: "INSERT INTO users (username,email,password) VALUES (?,?,?)", args: [username.trim(), email.trim().toLowerCase(), hash] });
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: 'Lỗi Database: ' + e.message }); }
+  } catch (e) { res.status(500).json({ error: 'Lỗi: ' + e.message }); }
 });
 
 app.post('/api/login', async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    if (!username || !email || !password) return res.status(400).json({ error: 'Nhập thiếu thông tin' });
     const rs = await db.execute({ sql: "SELECT * FROM users WHERE username=?", args: [username.trim()] });
     const user = rs.rows[0];
-    
-    if (!user) return res.status(400).json({ error: 'Email hoặc mật khẩu sai!' });
-    if ((user.email || '').toLowerCase() !== email.trim().toLowerCase()) return res.status(400).json({ error: 'Email hoặc mật khẩu sai!' });
-    if (!bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'Email hoặc mật khẩu sai!' });
+    if (!user || user.email !== email || !bcrypt.compareSync(password, user.password)) {
+      return res.status(400).json({ error: 'Sai tài khoản hoặc mật khẩu!' });
+    }
     if (user.status === 'banned') return res.status(403).json({ error: 'Tài khoản bị khóa' });
-    
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET, { expiresIn: '7d' });
     res.cookie('token', token, { httpOnly: true, maxAge: 7*24*3600*1000 });
     res.json({ ok: true, role: user.role });
-  } catch (e) { res.status(500).json({ error: 'Lỗi Database: ' + e.message }); }
+  } catch (e) { res.status(500).json({ error: 'Lỗi: ' + e.message }); }
 });
 
 app.post('/api/logout', (req, res) => { res.clearCookie('token'); res.json({ ok: true }); });
 app.get('/api/me', auth, async (req, res) => {
-  const rs = await db.execute({ sql: "SELECT id,username,email,role,balance,status FROM users WHERE id=?", args: [req.user.id] });
+  const rs = await db.execute({ sql: "SELECT id,username,email,role,status FROM users WHERE id=?", args: [req.user.id] });
   res.json(rs.rows[0]);
 });
 
-// ================= API SẢN PHẨM & MUA HÀNG =================
 app.get('/api/products', async (req, res) => {
   try {
     const rs = await db.execute(`SELECT p.*, (SELECT COUNT(*) FROM keys k WHERE k.product_id=p.id AND k.sold=0) AS stock FROM products p ORDER BY p.id`);
@@ -124,11 +108,9 @@ app.post('/api/buy/:productId', auth, async (req, res) => {
     const rsP = await db.execute({ sql: "SELECT * FROM products WHERE id=?", args: [productId] });
     const product = rsP.rows[0];
     if (!product) return res.status(404).json({ error: 'Không có sản phẩm' });
-
     const payment_code = 'DH' + Date.now().toString().slice(-6) + Math.floor(Math.random()*90+10);
     const rsO = await db.execute({ sql: "INSERT INTO orders (user_id, product_id, amount, payment_code, status) VALUES (?,?,?,?, 'pending')", args: [req.user.id, productId, product.price, payment_code] });
-
-    notifyAdmin(`🛒 <b>ĐƠN MỚI #${rsO.lastInsertRowid}</b>\nMã CK: <code>${payment_code}</code>`);
+    notifyAdmin(`🛒 ĐƠN MỚI #${rsO.lastInsertRowid}\nMã: ${payment_code}`);
     res.json({ ok: true, orderId: rsO.lastInsertRowid, payment_code, amount: product.price, productName: product.name });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -136,7 +118,7 @@ app.post('/api/buy/:productId', auth, async (req, res) => {
 app.post('/api/order/:orderId/confirm', auth, async (req, res) => {
   try {
     await db.execute({ sql: "UPDATE orders SET status='waiting' WHERE id=? AND user_id=?", args: [req.params.orderId, req.user.id] });
-    notifyAdmin(`💰 <b>KHÁCH ĐÃ XÁC NHẬN CK ĐƠN #${req.params.orderId}</b>\n👉 Vào Admin duyệt!`);
+    notifyAdmin(`💰 KHÁCH ĐÃ XÁC NHẬN CK ĐƠN #${req.params.orderId}`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -148,7 +130,6 @@ app.get('/api/my-orders', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ================= API ADMIN =================
 app.get('/api/admin/stats', auth, adminOnly, async (req, res) => {
   const u = await db.execute("SELECT COUNT(*) c FROM users WHERE role='user'");
   const p = await db.execute("SELECT COUNT(*) c FROM products");
@@ -168,11 +149,9 @@ app.post('/api/admin/orders/:id/approve', auth, adminOnly, async (req, res) => {
   const rsO = await db.execute({ sql: "SELECT * FROM orders WHERE id=?", args: [orderId] });
   const order = rsO.rows[0];
   if (!order || order.status === 'paid') return res.status(400).json({ error: 'Đơn không hợp lệ' });
-
   const rsK = await db.execute({ sql: "SELECT * FROM keys WHERE product_id=? AND sold=0 LIMIT 1", args: [order.product_id] });
   const key = rsK.rows[0];
-  if (!key) return res.status(400).json({ error: 'Hết key trong kho!' });
-
+  if (!key) return res.status(400).json({ error: 'Hết key!' });
   await db.execute({ sql: "UPDATE keys SET sold=1, order_id=? WHERE id=?", args: [orderId, key.id] });
   await db.execute({ sql: "UPDATE orders SET status='paid', key_id=?, paid_at=CURRENT_TIMESTAMP WHERE id=?", args: [key.id, orderId] });
   res.json({ ok: true, key: key.key_value });
