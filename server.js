@@ -11,10 +11,10 @@ const SECRET = 'tanloc_shop_secret_2024_doi_thanh_chuoi_that_dai';
 // ==========================================
 // ⚠️ BẠN HÃY THAY THÔNG TIN CỦA BẠN VÀO 4 DÒNG DƯỚI ĐÂY
 // ==========================================
-const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io'; 
-const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ1NDQ2NjIsImlkIjoiMDFhMWQyZTItZjYwMS03NjdkLWIzMzItYWRlNjM5NjU2ZWZhIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIwOWU3NmM5LWIwOTUtNGY1ZS05OTk1LThiMmJiOTc2ODVhZSJ9.Y_iM5fHG2AOvo7tPrqpCvfb1-aPryRE2vRq50o2l7C4iotQTd-fywsWL5tgyzgV14Tp-8QRDdPqtGKGZHaZVDg';
-const TELEGRAM_TOKEN = '9118571174:AAFeWYqBev6303qPCx0d-2J-cDE4sU92ke8';
-const TELEGRAM_CHAT_ID = '8240363472';
+const TURSO_URL = process.env.TURSO_DATABASE_URL;
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 // ==========================================
 
 const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A', bankName: 'MB Bank' };
