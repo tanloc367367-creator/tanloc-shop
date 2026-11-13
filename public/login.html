@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đăng nhập - TÂN LỘC SHOP</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.box{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px;max-width:420px;width:100%;backdrop-filter:blur(10px);}
+h2{text-align:center;margin-bottom:25px;background:linear-gradient(90deg,#00f2fe,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:2rem;}
+.field{margin-bottom:15px;}
+.field label{display:block;font-size:0.85rem;color:#aaa;margin-bottom:6px;}
+.field input{width:100%;padding:14px;border:1px solid #333;background:rgba(255,255,255,0.05);border-radius:12px;color:#fff;font-size:1rem;}
+.field input:focus{outline:none;border-color:#4facfe;}
+button{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(90deg,#4facfe,#00f2fe);color:#000;font-weight:700;font-size:1rem;cursor:pointer;margin-top:5px;}
+button:hover:not(:disabled){transform:scale(1.02);}
+button:disabled{opacity:0.6;cursor:not-allowed;}
+.msg{text-align:center;margin-bottom:15px;font-size:0.9rem;min-height:20px;}
+.msg.err{color:#f5576c;}
+.msg.ok{color:#00f2fe;}
+.link{text-align:center;margin-top:20px;color:#aaa;font-size:0.9rem;}
+.link a{color:#4facfe;text-decoration:none;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>Đăng nhập</h2>
+  <div class="msg" id="msg"></div>
+  <div class="field"><label>Tên đăng nhập</label><input id="username" placeholder="Nhập tên đăng nhập"></div>
+  <div class="field"><label>Email</label><input id="email" type="email" placeholder="Nhập email đã đăng ký"></div>
+  <div class="field"><label>Mật khẩu</label><input id="password" type="password" placeholder="Nhập mật khẩu"></div>
+  <button id="btnLogin" onclick="doLogin()">Đăng nhập</button>
+  <div class="link">Chưa có tài khoản? <a href="/register.html">Đăng ký</a></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+async function doLogin() {
+  const username = $('username').value.trim();
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  const msg = $('msg'); msg.textContent = ''; msg.className = 'msg';
+  if (!username || !email || !password) { msg.textContent = '❌ Nhập đầy đủ thông tin'; msg.className = 'msg err'; return; }
+  $('btnLogin').disabled = true; $('btnLogin').textContent = 'Đang kiểm tra...';
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username, email, password }) });
+    const d = await r.json();
+    if (!r.ok) { msg.textContent = '❌ ' + d.error; msg.className = 'msg err'; $('btnLogin').disabled = false; $('btnLogin').textContent = 'Đăng nhập'; return; }
+    msg.textContent = '✅ Đăng nhập thành công!'; msg.className = 'msg ok';
+    setTimeout(() => location.href = '/', 800);
+  } catch (e) { msg.textContent = '❌ Lỗi kết nối'; msg.className = 'msg err'; $('btnLogin').disabled = false; $('btnLogin').textContent = 'Đăng nhập'; }
+}
+</script>
+</body>
+</html>
