@@ -6,12 +6,12 @@ const SECRET = 'tanloc_shop_secret_2024';
 
 // ĐIỀN THÔNG TIN TURSO CỦA BẠN VÀO ĐÂY
 const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io';
-const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ2ODM0NDEsImlkIjoiMDFhMWQ5MGEtNDAwMS03N2YwLTg4NjgtNTUxOWRjNzhjYTAwIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIyZDNiZjVkLThhY2MtNDk0Yi1hNjdlLTJlMTcwOTc2MmViZSJ9.HT2GfKduxxyqbUIgia2pdjP9HsCIXRam8d2rLO6s1zovh6dTYliFnT8OyHBiY62J3HMB2Xc_NaS88QlOSug2CQ'; 
+const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ2ODM5NzgsImlkIjoiMDFhMWQ5MGEtNDAwMS03N2YwLTg4NjgtNTUxOWRjNzhjYTAwIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIyZDNiZjVkLThhY2MtNDk0Yi1hNjdlLTJlMTcwOTc2MmViZSJ9.dZ1trNVkOd0yyP3CzwJogXTI5sxQrZ25-1eVU8npFSb9DvtSQBaipg2JBG_YZCRhfWF8CwtsplrVm1r8GhoOCQ'; 
 
+// Kết nối trực tiếp đến Turso (Đã bỏ syncUrl để tránh lỗi)
 const db = createClient({ 
   url: TURSO_URL, 
-  authToken: TURSO_TOKEN,
-  syncUrl: TURSO_URL 
+  authToken: TURSO_TOKEN
 });
 
 app.use(express.json());
@@ -25,7 +25,8 @@ async function initDB() {
   } catch (e) { console.error("LỖI DB:", e.message); }
 }
 
-db.sync().then(() => initDB()).catch(err => console.error("LỖI SYNC:", err.message));
+// Khởi tạo Database trực tiếp
+initDB();
 
 // ================= API CHO KHÁCH HÀNG =================
 app.get('/api/products', async (req, res) => {
