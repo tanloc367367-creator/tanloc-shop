@@ -10,25 +10,18 @@
   .hidden { display: none !important; }
   .topbar { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #333; max-width:1100px; margin:0 auto; }
   .logo { font-size:1.5rem; font-weight:800; background:linear-gradient(90deg,#00f2fe,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .nav { display:flex; align-items:center; gap:15px; }
-  .nav a { color:#aaa; text-decoration:none; font-size:0.9rem; cursor:pointer; }
   .brand { text-align:center; padding:30px 20px 10px; }
   .brand-name { font-size:2.5rem; font-weight:900; letter-spacing:2px; background:linear-gradient(90deg,#00f2fe,#4facfe,#a855f7,#00f2fe); background-size:300% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:shineBrand 4s linear infinite; line-height:1.2; }
   @keyframes shineBrand { to { background-position:300% center; } }
   .brand-sub { font-size:1rem; font-weight:700; color:#ffd700; letter-spacing:3px; margin-top:8px; text-transform:uppercase; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; max-width:1100px; margin:30px auto; padding:0 20px; }
   .card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:25px; position:relative; }
-  .badge { position:absolute; top:15px; right:15px; background:linear-gradient(90deg,#f093fb,#f5576c); padding:5px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; }
   .card h3 { font-size:1.3rem; margin-bottom:10px; }
   .desc { color:#aaa; font-size:0.9rem; margin-bottom:15px; min-height:40px; }
   .price { font-size:1.8rem; font-weight:800; color:#00f2fe; margin-bottom:15px; }
   .stock { display:inline-block; padding:5px 12px; border-radius:20px; font-size:0.8rem; font-weight:700; margin-bottom:12px; }
   .btn { width:100%; padding:12px; border:none; border-radius:12px; background:linear-gradient(90deg,#4facfe,#00f2fe); color:#000; font-weight:700; font-size:1rem; cursor:pointer; }
   .btn-sm { width:auto; padding:6px 12px; font-size:0.8rem; margin:0 2px; }
-  .auth-box { max-width:420px; margin:50px auto; background:rgba(255,255,255,0.05); border-radius:24px; padding:40px; }
-  .field { margin-bottom:15px; }
-  .field input { width:100%; padding:14px; border:1px solid #333; background:rgba(255,255,255,0.05); border-radius:12px; color:#fff; }
-  .msg { text-align:center; margin-bottom:15px; font-size:0.9rem; }
   .tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #333; overflow-x:auto; }
   .tab { padding:12px 20px; cursor:pointer; color:#aaa; border:none; background:none; white-space:nowrap; }
   .tab.active { color:#4facfe; border-bottom:2px solid #4facfe; }
@@ -48,45 +41,29 @@
 </head>
 <body>
 
-<!-- TRANG CHỦ -->
+<!-- TRANG KHÁCH HÀNG -->
 <div id="page-home">
-  <div class="topbar"><div class="logo">🔑 TÂN LỘC</div><div class="nav" id="nav-home"></div></div>
+  <div class="topbar"><div class="logo">🔑 TÂN LỘC</div></div>
   <div class="brand"><div class="brand-name">VOHOAINAM.NET</div><div class="brand-sub">SHOP BÁN KEY TANLOC!</div></div>
   <div class="grid" id="products-list"></div>
 </div>
 
-<!-- ĐĂNG NHẬP / ĐĂNG KÝ -->
-<div id="page-auth" class="hidden">
-  <div class="auth-box">
-    <h2 id="auth-title" style="text-align:center;margin-bottom:20px;">Đăng nhập</h2>
-    <div class="msg" id="auth-msg"></div>
-    <div class="field"><input id="inp-username" placeholder="Tên đăng nhập"></div>
-    <div class="field"><input id="inp-email" placeholder="Email"></div>
-    <div class="field"><input id="inp-password" type="password" placeholder="Mật khẩu"></div>
-    <button class="btn" id="btn-auth" onclick="submitAuth()">Đăng nhập</button>
-    <p style="text-align:center;margin-top:15px;color:#4facfe;cursor:pointer;" id="auth-switch" onclick="toggleAuth()">Chưa có tài khoản? Đăng ký</p>
-  </div>
-</div>
-
-<!-- ADMIN -->
+<!-- TRANG ADMIN (BÍ MẬT) -->
 <div id="page-admin" class="hidden" style="padding:20px;max-width:1200px;margin:0 auto;">
-  <div style="display:flex;justify-content:space-between;margin-bottom:20px;">
-    <h1>⚙️ Admin</h1><button onclick="logout()" class="btn" style="width:auto;padding:10px 20px;background:#f5576c;color:#fff;">Đăng xuất</button>
+  <div style="display:flex;justify-content:space-between;margin-bottom:20px; align-items:center;">
+    <h1 style="color:#00f2fe;">⚙️ Admin Panel</h1>
+    <a href="/" class="btn" style="width:auto;padding:10px 20px;background:#f5576c;color:#fff;text-decoration:none;">Thoát Admin</a>
   </div>
+  
   <div class="tabs">
-    <button class="tab active" onclick="showTab('dash',this)">📊 Tổng quan</button>
-    <button class="tab" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
-    <button class="tab" onclick="showTab('products',this)">📦 Sản phẩm & Kho Key</button>
-    <button class="tab" onclick="showTab('users',this)">👥 Người dùng</button>
+    <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
+    <button class="tab" onclick="showTab('products',this)">📦 Quản lý Sản phẩm & Kho Key</button>
   </div>
   
-  <div class="panel active" id="dash"><div id="stats-box"></div></div>
-  
-  <div class="panel" id="orders">
-    <table><thead><tr><th>ID</th><th>Khách</th><th>SP</th><th>Key</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table>
+  <div class="panel active" id="orders">
+    <table><thead><tr><th>Mã ĐH</th><th>Sản phẩm</th><th>Key đã giao</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table>
   </div>
   
-  <!-- GỘP TAB SẢN PHẨM VÀ KHO KEY -->
   <div class="panel" id="products">
     <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm sản phẩm mới</h2>
     <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -97,20 +74,9 @@
 
     <h2 style="margin-bottom:15px; font-size:1.2rem;">Danh sách sản phẩm & Thêm Key</h2>
     <table>
-      <thead>
-        <tr>
-          <th>Tên SP</th>
-          <th>Giá</th>
-          <th>Còn lại</th>
-          <th>Thêm Key (cách nhau dấu phẩy)</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Tên SP</th><th>Giá</th><th>Còn lại</th><th>Thêm Key (cách nhau dấu phẩy)</th></tr></thead>
       <tbody id="admin-prod-body"></tbody>
     </table>
-  </div>
-
-  <div class="panel" id="users">
-    <table><tbody id="admin-user-body"></tbody></table>
   </div>
 </div>
 
@@ -121,126 +87,100 @@
     <p id="pay-product" style="text-align:center;"></p>
     <p id="pay-amount" style="text-align:center;font-size:2rem;color:#00f2fe;"></p>
     <div class="qr-wrap"><img id="pay-qr"></div>
-    <p style="text-align:center;font-size:0.9rem;">Nội dung: <b id="pay-memo" style="color:#ffd700;"></b></p>
-    <button class="btn" onclick="confirmPayment()" style="margin-top:10px;">✅ Đã chuyển khoản</button>
+    <p style="text-align:center;font-size:0.9rem;">Nội dung CK: <b id="pay-memo" style="color:#ffd700; font-size:1.2rem;"></b></p>
+    <p style="text-align:center; font-size:0.8rem; color:#aaa; margin-top:10px;">(Chuyển khoản xong, vui lòng nhắn Zalo để nhận Key)</p>
+    <button class="btn" onclick="document.getElementById('pay-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let currentUser = null, authMode = 'login', currentOrder = null;
+// === CƠ CHẾ BẢO MẬT BẰNG LINK ===
+// Nếu trên thanh địa chỉ có chứa #admintanlocdepzai thì sẽ mở trang Admin
+const isAdmin = window.location.hash === '#admintanlocdepzai';
 
-function showPage(id) { ['page-home','page-auth','page-admin'].forEach(p => document.getElementById(p).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 
 async function init() {
-  try {
-    const r = await fetch('/api/me');
-    if (r.ok) { currentUser = await r.json(); renderNav(true); if(currentUser.role==='admin'||currentUser.role==='super') { showPage('page-admin'); showTab('dash', document.querySelector('.tab')); } else showPage('page-home'); }
-    else { renderNav(false); showPage('page-home'); }
+  if (isAdmin) {
+    document.getElementById('page-home').classList.add('hidden');
+    document.getElementById('page-admin').classList.remove('hidden');
+    loadAdminOrders();
+    loadAdminProducts();
+  } else {
+    document.getElementById('page-admin').classList.add('hidden');
+    document.getElementById('page-home').classList.remove('hidden');
     loadProducts();
-  } catch(e) { renderNav(false); showPage('page-home'); loadProducts(); }
+  }
 }
 
-function renderNav(logged) {
-  document.getElementById('nav-home').innerHTML = logged 
-    ? `<span style="color:#4facfe;">👤 ${currentUser.username}</span>${['admin','super'].includes(currentUser.role)?`<a onclick="showPage('page-admin');showTab('dash',document.querySelector('.tab'))">⚙️ Admin</a>`:''}<a onclick="logout()">Đăng xuất</a>`
-    : `<a onclick="showAuth('login')" style="color:#4facfe;">Đăng nhập</a><a onclick="showAuth('register')">Đăng ký</a>`;
-}
-
-async function logout() { await fetch('/api/logout',{method:'POST'}); location.reload(); }
-
+// ================= TRANG KHÁCH HÀNG =================
 async function loadProducts() {
-  const r = await fetch('/api/products'); const list = await r.json();
-  document.getElementById('products-list').innerHTML = list.map(p => `
-    <div class="card">
-      ${p.badge?`<div class="badge">${p.badge}</div>`:''}
-      <h3>${p.name}</h3><p class="desc">${p.description||''}</p>
-      <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
-      <div class="stock" style="background:${p.stock>0?'#00f2fe22':'#f5576c22'};color:${p.stock>0?'#00f2fe':'#f5576c'}">${p.stock>0?`Còn ${p.stock} key`:'Hết key'}</div>
-      <button class="btn" ${p.stock<=0?'disabled':''} onclick="buyKey(${p.id})">Mua ngay</button>
-    </div>`).join('');
-}
-
-function showAuth(m) {
-  authMode = m; showPage('page-auth');
-  document.getElementById('auth-title').textContent = m==='login'?'Đăng nhập':'Đăng ký';
-  document.getElementById('btn-auth').textContent = m==='login'?'Đăng nhập':'Tạo tài khoản';
-  document.getElementById('auth-switch').textContent = m==='login'?'Chưa có tài khoản? Đăng ký':'Đã có tài khoản? Đăng nhập';
-  document.getElementById('auth-msg').textContent = '';
-}
-function toggleAuth() { showAuth(authMode==='login'?'register':'login'); }
-
-async function submitAuth() {
-  const u=document.getElementById('inp-username').value, e=document.getElementById('inp-email').value, p=document.getElementById('inp-password').value;
-  const msg=document.getElementById('auth-msg');
-  if(!u||!e||!p) return msg.textContent='Nhập đủ thông tin!';
-  const r = await fetch(authMode==='login'?'/api/login':'/api/register', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,email:e,password:p})});
-  const d = await r.json();
-  if(!r.ok) return msg.textContent = d.error;
-  if(authMode==='register') { msg.style.color='#00f2fe'; msg.textContent='Đăng ký thành công!'; setTimeout(()=>showAuth('login'),1000); }
-  else location.reload();
+  try {
+    const r = await fetch('/api/products'); const list = await r.json();
+    document.getElementById('products-list').innerHTML = list.map(p => `
+      <div class="card">
+        <h3>${p.name}</h3><p class="desc">${p.description||''}</p>
+        <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
+        <div class="stock" style="background:${p.stock>0?'#00f2fe22':'#f5576c22'};color:${p.stock>0?'#00f2fe':'#f5576c'}">${p.stock>0?`Còn ${p.stock} key`:'Hết key'}</div>
+        <button class="btn" ${p.stock<=0?'disabled':''} onclick="buyKey(${p.id})">Mua ngay</button>
+      </div>`).join('');
+  } catch (e) { toast('Lỗi tải sản phẩm!'); }
 }
 
 async function buyKey(id) {
-  if(!currentUser) return showAuth('login');
-  const r = await fetch('/api/buy/'+id,{method:'POST'}); const d = await r.json();
-  if(!r.ok) return toast(d.error);
-  currentOrder = d;
-  document.getElementById('pay-product').textContent = d.productName;
-  document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN')+'đ';
-  document.getElementById('pay-memo').textContent = d.payment_code;
-  document.getElementById('pay-qr').src = `https://img.vietqr.io/image/970422-0123456789-compact2.png?amount=${d.amount}&addInfo=${d.payment_code}`;
-  document.getElementById('pay-modal').classList.add('active');
+  try {
+    const r = await fetch('/api/buy/'+id,{method:'POST'}); const d = await r.json();
+    if(!r.ok) return toast(d.error);
+    document.getElementById('pay-product').textContent = d.productName;
+    document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN')+'đ';
+    document.getElementById('pay-memo').textContent = d.payment_code;
+    document.getElementById('pay-qr').src = `https://img.vietqr.io/image/970422-0123456789-compact2.png?amount=${d.amount}&addInfo=${d.payment_code}`;
+    document.getElementById('pay-modal').classList.add('active');
+  } catch (e) { toast('Lỗi kết nối'); }
 }
 
-async function confirmPayment() {
-  if(!currentOrder) return;
-  await fetch('/api/order/'+currentOrder.orderId+'/confirm',{method:'POST'});
-  toast('Đã gửi yêu cầu, chờ Admin duyệt!'); document.getElementById('pay-modal').classList.remove('active');
-}
-
+// ================= TRANG ADMIN =================
 function showTab(id, btn) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active'); btn.classList.add('active');
-  if(id==='dash') loadStats(); 
   if(id==='orders') loadAdminOrders(); 
   if(id==='products') loadAdminProducts(); 
-  if(id==='users') loadUsers();
-}
-
-async function loadStats() {
-  const r = await fetch('/api/admin/stats'); const s = await r.json();
-  document.getElementById('stats-box').innerHTML = `<div style="display:flex;gap:20px;flex-wrap:wrap; background:rgba(255,255,255,0.05); padding:20px; border-radius:10px;"><div>Người dùng: <b style="color:#00f2fe">${s.users}</b></div><div>Doanh thu: <b style="color:#ffd700">${s.revenue.toLocaleString('vi-VN')}đ</b></div><div>Key còn lại: <b style="color:#00f2fe">${s.keysAvailable}</b></div></div>`;
 }
 
 async function loadAdminOrders() {
-  const r = await fetch('/api/admin/orders'); const list = await r.json();
-  document.getElementById('admin-order-body').innerHTML = list.map(o=>`<tr><td>#${o.id}</td><td>${o.username}</td><td>${o.product_name}</td><td style="color:#00f2fe; font-family:monospace;">${o.key_value||'-'}</td><td>${o.status}</td><td>${o.status==='waiting'?`<button onclick="approve(${o.id})" class="btn btn-sm">Duyệt</button>`:''}</td></tr>`).join('');
+  try {
+    const r = await fetch('/api/admin/orders'); const list = await r.json();
+    document.getElementById('admin-order-body').innerHTML = list.map(o=>`<tr><td><b style="color:#ffd700">${o.payment_code}</b></td><td>${o.product_name}</td><td style="color:#00f2fe; font-family:monospace;">${o.key_value||'-'}</td><td>${o.status}</td><td>${o.status==='pending'?`<button onclick="approve(${o.id})" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button>`:''}</td></tr>`).join('');
+  } catch (e) { toast('Lỗi tải đơn hàng'); }
 }
-async function approve(id) { await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); loadAdminOrders(); }
 
-// HIỂN THỊ SẢN PHẨM VÀ Ô THÊM KEY NGAY TRONG BẢNG
+async function approve(id) { 
+  await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); 
+  loadAdminOrders(); toast('Đã duyệt đơn!'); 
+}
+
 async function loadAdminProducts() {
-  const r = await fetch('/api/products'); const list = await r.json();
-  document.getElementById('admin-prod-body').innerHTML = list.map(p=>`
-    <tr>
-      <td>${p.name}</td>
-      <td>${p.price.toLocaleString('vi-VN')}đ</td>
-      <td><b style="color:${p.stock>0?'#00f2fe':'#f5576c'}">${p.stock}</b></td>
-      <td>
-        <div style="display:flex; gap:5px;">
-          <input type="text" id="key-input-${p.id}" class="admin-input" placeholder="Nhập danh sách key...">
-          <button onclick="addKeyInline(${p.id})" class="btn btn-sm" style="background:#00f2fe; white-space:nowrap;">Thêm</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  try {
+    const r = await fetch('/api/products'); const list = await r.json();
+    document.getElementById('admin-prod-body').innerHTML = list.map(p=>`
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.price.toLocaleString('vi-VN')}đ</td>
+        <td><b style="color:${p.stock>0?'#00f2fe':'#f5576c'}">${p.stock}</b></td>
+        <td>
+          <div style="display:flex; gap:5px;">
+            <input type="text" id="key-input-${p.id}" class="admin-input" placeholder="Nhập danh sách key...">
+            <button onclick="addKeyInline(${p.id})" class="btn btn-sm" style="background:#00f2fe; white-space:nowrap;">Thêm</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) { toast('Lỗi tải sản phẩm'); }
 }
 
-// HÀM THÊM KEY TRỰC TIẾP TỪ BẢNG SẢN PHẨM
 async function addKeyInline(productId) {
   const input = document.getElementById('key-input-' + productId);
   const raw = input.value.trim();
@@ -250,29 +190,26 @@ async function addKeyInline(productId) {
   let success = 0;
   for (const key_value of keys) {
     const res = await fetch('/api/admin/keys', {
-      method: 'POST', 
-      headers: {'Content-Type': 'application/json'},
+      method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ product_id: productId, key_value })
     });
     if(res.ok) success++;
   }
   toast(`✅ Đã thêm ${success} key vào kho!`);
-  input.value = ''; // Xóa ô nhập
-  loadAdminProducts(); // Load lại bảng để cập nhật số lượng
+  input.value = ''; loadAdminProducts(); 
 }
 
 async function addProduct() {
-  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('p-name').value,price:+document.getElementById('p-price').value})});
+  const name = document.getElementById('p-name').value;
+  const price = +document.getElementById('p-price').value;
+  if (!name || !price) return toast('Nhập tên và giá!');
+  
+  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description:'',badge:''})});
   loadAdminProducts(); toast('Đã thêm sản phẩm'); 
   document.getElementById('p-name').value=''; document.getElementById('p-price').value='';
-}
-
-async function loadUsers() {
-  const r = await fetch('/api/admin/users'); const list = await r.json();
-  document.getElementById('admin-user-body').innerHTML = list.map(u=>`<tr><td>${u.username}</td><td>${u.email}</td><td>${u.role}</td></tr>`).join('');
 }
 
 init();
 </script>
 </body>
-  </html>
+</html>
