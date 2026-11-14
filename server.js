@@ -1,3 +1,7 @@
+// Ép Node.js dùng DNS của Google để sửa lỗi querySrv ENOTFOUND trên Render
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 
@@ -5,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// ĐIỀN LINK MONGODB CỦA BẠN VÀO ĐÂY (Lấy ở màn hình Connect -> Drivers)
+// ĐIỀN LINK MONGODB CỦA BẠN VÀO ĐÂY
 const MONGO_URI = 'mongodb+srv://tanloc367367_db_user:tuaYwBOMHrrUmV0f@cluster0.om1abj.mongodb.net/?retryWrites=true&w=majority'; 
 
 const client = new MongoClient(MONGO_URI);
@@ -17,12 +21,15 @@ async function connectDB() {
     await client.connect();
     db = client.db('tanloc_shop');
     console.log('✅ Đã kết nối MongoDB thành công');
-  } catch (e) { console.error('Lỗi kết nối MongoDB:', e); }
+  } catch (e) { 
+    console.error('❌ LỖI KẾT NỐI MONGODB:', e.message); 
+  }
 }
 connectDB();
 
 // ================= API KHÁCH HÀNG =================
 app.get('/api/products', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
   try {
     const products = await db.collection('products').find().toArray();
     const result = await Promise.all(products.map(async (p) => {
@@ -34,6 +41,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/buy/:productId', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
   try {
     const product = await db.collection('products').findOne({ _id: new ObjectId(req.params.productId) });
     if (!product) return res.status(404).json({ error: 'Không có sản phẩm' });
@@ -52,6 +60,7 @@ app.post('/api/buy/:productId', async (req, res) => {
 
 // ================= API ADMIN =================
 app.get('/api/admin/orders', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
   try {
     const orders = await db.collection('orders').find().sort({_id:-1}).limit(100).toArray();
     const result = await Promise.all(orders.map(async (o) => {
@@ -68,6 +77,7 @@ app.get('/api/admin/orders', async (req, res) => {
 });
 
 app.post('/api/admin/orders/:id/approve', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
   try {
     const orderId = req.params.id;
     const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
@@ -84,6 +94,7 @@ app.post('/api/admin/orders/:id/approve', async (req, res) => {
 });
 
 app.post('/api/admin/products', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
   try {
     await db.collection('products').insertOne({ name: req.body.name, price: req.body.price, desc: req.body.desc || '' });
     res.json({ ok: true });
@@ -91,6 +102,7 @@ app.post('/api/admin/products', async (req, res) => {
 });
 
 app.post('/api/admin/keys', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
   try {
     await db.collection('keys').insertOne({ productId: req.body.product_id, keyValue: req.body.key_value, sold: false });
     res.json({ ok: true });
