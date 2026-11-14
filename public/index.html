@@ -8,20 +8,14 @@
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
   body { background:linear-gradient(135deg,#0f0c29,#302b63,#24243e); color:#fff; min-height:100vh; padding-bottom: 50px; }
   .hidden { display: none !important; }
-  
-  /* Topbar & Brand */
   .topbar { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #333; max-width:1100px; margin:0 auto; }
   .logo { font-size:1.5rem; font-weight:800; background:linear-gradient(90deg,#00f2fe,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
   .brand { text-align:center; padding:30px 20px 10px; }
   .brand-name { font-size:2.5rem; font-weight:900; letter-spacing:2px; background:linear-gradient(90deg,#00f2fe,#4facfe,#a855f7,#00f2fe); background-size:300% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:shineBrand 4s linear infinite; line-height:1.2; }
   @keyframes shineBrand { to { background-position:300% center; } }
   .brand-sub { font-size:1rem; font-weight:700; color:#ffd700; letter-spacing:3px; margin-top:8px; text-transform:uppercase; }
-
-  /* Sale Banner */
   .sale-banner { background: linear-gradient(90deg, #f5576c, #f093fb); text-align: center; padding: 10px; font-weight: bold; font-size: 1rem; color: #fff; display: flex; justify-content: center; align-items: center; gap: 10px; }
   .sale-banner span { font-family: monospace; font-size: 1.2rem; background: #000; padding: 2px 8px; border-radius: 5px; }
-
-  /* Products */
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; max-width:1100px; margin:30px auto; padding:0 20px; }
   .card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:25px; position:relative; transition: all 0.3s ease; }
   .card:hover { transform: translateY(-5px); border-color: #00f2fe; box-shadow: 0 10px 20px rgba(0,242,254,0.15); }
@@ -33,8 +27,6 @@
   .btn:disabled { opacity:0.5; cursor:not-allowed; }
   .btn-outline { background:transparent; border:1px solid #4facfe; color:#4facfe; }
   .btn-sm { width:auto; padding:6px 12px; font-size:0.8rem; margin:0 2px; }
-
-  /* Ví Điện Tử */
   .wallet-box { max-width: 600px; margin: 30px auto; background: #1a1a2e; border: 1px solid #4facfe; border-radius: 15px; padding: 20px; text-align: center; }
   .wallet-box h3 { color: #00f2fe; margin-bottom: 10px; }
   .wallet-id { font-family: monospace; font-size: 1.2rem; color: #ffd700; margin: 10px 0; background: #000; padding: 5px 10px; border-radius: 5px; display: inline-block; }
@@ -42,8 +34,6 @@
   .input-group { margin-top: 15px; text-align: left; }
   .input-group label { font-size: 0.85rem; color: #aaa; margin-bottom: 5px; display: block; }
   .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; margin-bottom: 10px; }
-  
-  /* Admin Tabs */
   .admin-container { max-width: 1000px; margin: 20px auto; padding: 20px; }
   .tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #333; overflow-x:auto; }
   .tab { padding:12px 20px; cursor:pointer; color:#aaa; border:none; background:none; white-space:nowrap; }
@@ -53,20 +43,21 @@
   th,td { padding:12px; text-align:left; border-bottom:1px solid #222; font-size:0.88rem; vertical-align:middle; }
   th { background:rgba(79,172,254,0.15); color:#4facfe; }
   input.admin-input { padding:8px; border-radius:6px; border:1px solid #444; background:#222; color:#fff; font-size:0.85rem; width:100%; max-width:300px; margin-right:5px;}
-
-  /* Modal */
   .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; padding:20px; }
   .modal.active { display:flex; }
-  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; }
+  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; max-height: 90vh; overflow-y: auto; }
   .qr-wrap { background:#fff; padding:15px; border-radius:12px; text-align:center; margin:15px 0; display:inline-block; }
   .qr-wrap img { width:200px; height:200px; display:block; }
   .bank-info { background:rgba(79,172,254,0.1); padding:15px; border-radius:12px; font-size:0.9rem; line-height:1.6; text-align:left; margin-top:15px; }
   .bank-info b { color:#4facfe; }
   .memo { color:#ffd700; font-family:monospace; font-weight:bold; font-size:1.1rem; }
   .copy-btn { background: #4facfe; color: #000; border: none; padding: 4px 10px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; cursor: pointer; margin-left: 10px; }
-  
   .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00f2fe; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; display:none; z-index:2000; }
   .toast.show { display:block; }
+  .key-item { background: rgba(255,255,255,0.05); border-left: 4px solid #4facfe; padding: 15px; margin-bottom: 10px; border-radius: 8px; text-align: left; }
+  .key-item.paid { border-left-color: #00f2fe; }
+  .key-item .key-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
+  .key-item .key-code { background: #000; padding: 5px 10px; border-radius: 5px; font-family: monospace; color: #00f2fe; font-size: 1.1rem; display: inline-block; margin-top: 5px; letter-spacing: 1px;}
 </style>
 </head>
 <body>
@@ -74,10 +65,12 @@
 <!-- TRANG KHÁCH HÀNG -->
 <div id="page-home">
   <div class="sale-banner">🔥 FLASH SALE KẾT THÚC SAU: <span id="countdown">02:00:00</span> 🔥</div>
-  <div class="topbar"><div class="logo">🔑 TÂN LỘC</div></div>
+  <div class="topbar">
+    <div class="logo">🔑 TÂN LỘC</div>
+    <button onclick="openHistory()" class="btn btn-sm" style="background:rgba(0,242,254,0.2); color:#00f2fe; border:1px solid #00f2fe;">🧾 Lịch Sử Mua</button>
+  </div>
   <div class="brand"><div class="brand-name">VOHOAINAM.NET</div><div class="brand-sub">SHOP BÁN KEY TANLOC!</div></div>
 
-  <!-- VÍ ĐIỆN TỬ & NẠP THẺ -->
   <div class="wallet-box">
     <h3>💳 VÍ ĐIỆN TỬ CỦA BẠN</h3>
     <p style="font-size: 0.9rem; color: #aaa;">Mã Ví (Lưu lại để không mất tiền):</p>
@@ -87,7 +80,7 @@
     
     <hr style="border-color: #333; margin: 20px 0;">
     
-    <h3 style="color: #ffd700;">💳 NẠP THẺ CÀO</h3>
+    <h3 style="color: #ffd700;">💳 NẠP THẺ CÀO (CHỜ DUYỆT)</h3>
     <div class="input-group">
       <select id="card-type">
         <option value="VIETTEL">Viettel</option>
@@ -97,7 +90,7 @@
       <input id="card-amount" type="number" placeholder="Mệnh giá (VD: 10000)">
       <input id="card-serial" placeholder="Số Seri">
       <input id="card-pin" placeholder="Mã Thẻ">
-      <button onclick="napThe()" class="btn">Nạp Tiền</button>
+      <button onclick="napThe()" class="btn">Gửi Yêu Cầu Nạp</button>
     </div>
   </div>
 
@@ -113,17 +106,22 @@
   
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
+    <button class="tab" onclick="showTab('cards',this)">💳 Duyệt Thẻ</button>
     <button class="tab" onclick="showTab('products',this)">📦 Quản lý Sản phẩm</button>
   </div>
   
   <div class="panel active" id="orders">
     <table><thead><tr><th>Mã ĐH</th><th>Khách (Ví)</th><th>SP</th><th>Key đã giao</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table>
   </div>
+
+  <div class="panel" id="cards">
+    <table><thead><tr><th>Khách (Ví)</th><th>Loại thẻ</th><th>Mệnh giá</th><th>Seri</th><th>Mã thẻ</th><th>Hành động</th></tr></thead><tbody id="admin-card-body"></tbody></table>
+  </div>
   
   <div class="panel" id="products">
     <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm sản phẩm mới</h2>
     <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
-      <input id="p-name" placeholder="Tên sản phẩm" class="admin-input" style="max-width:200px;">
+      <input id="p-name" placeholder="Tên sản phẩm (VD: Gói VIP)" class="admin-input" style="max-width:200px;">
       <input id="p-price" type="number" placeholder="Giá (đ)" class="admin-input" style="max-width:120px;">
       <input id="p-desc" placeholder="Mô tả" class="admin-input" style="max-width:250px;">
       <button onclick="addProduct()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm SP</button>
@@ -132,7 +130,6 @@
   </div>
 </div>
 
-<!-- MODAL THANH TOÁN -->
 <div class="modal" id="pay-modal">
   <div class="modal-box">
     <h3 style="color:#4facfe; margin-bottom:15px;">💳 Thanh toán</h3>
@@ -150,16 +147,20 @@
   </div>
 </div>
 
+<div class="modal" id="history-modal">
+  <div class="modal-box" style="max-width: 600px; text-align: left;">
+    <h3 style="color:#4facfe; margin-bottom:15px; text-align: center;">🧾 Lịch Sử Mua Key</h3>
+    <div id="history-list" style="max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
+    <button class="btn" onclick="document.getElementById('history-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
+  </div>
+</div>
+
 <div class="toast" id="toast">Đã sao chép!</div>
 
 <script>
-// =========================================================
-// CẤU HÌNH (Giữ nguyên)
-// =========================================================
 const isAdmin = window.location.hash === '#admintanlocdepzai';
 const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A' };
 
-// Lấy Device ID
 function getDeviceId() {
   let id = localStorage.getItem('vip_code');
   if (!id) {
@@ -169,15 +170,14 @@ function getDeviceId() {
   return id;
 }
 
-// Hiển thị thông báo
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 
-// Khởi tạo
 async function init() {
   if (isAdmin) {
     document.getElementById('page-home').classList.add('hidden');
     document.getElementById('page-admin').classList.remove('hidden');
     loadAdminOrders();
+    loadAdminCards();
     loadAdminProducts();
   } else {
     document.getElementById('page-admin').classList.add('hidden');
@@ -189,9 +189,6 @@ async function init() {
   }
 }
 
-// =========================================================
-// API VÍ ĐIỆN TỬ
-// =========================================================
 async function loadBalance() {
   const id = getDeviceId();
   try {
@@ -203,19 +200,20 @@ async function loadBalance() {
 
 async function napThe() {
   const amount = document.getElementById('card-amount').value;
-  if (!amount) return alert('Vui lòng nhập mệnh giá thẻ!');
+  const serial = document.getElementById('card-serial').value;
+  const pin = document.getElementById('card-pin').value;
+  const type = document.getElementById('card-type').value;
+  if (!amount || !serial || !pin) return alert('Vui lòng nhập đầy đủ thông tin thẻ!');
   
-  // Mô phỏng nạp thẻ thành công
   const id = getDeviceId();
   try {
     const res = await fetch('/api/nap-the', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ deviceId: id, amount })
+      body: JSON.stringify({ deviceId: id, amount, type, serial, pin })
     });
     const data = await res.json();
     if (data.ok) {
-      alert('Nạp thẻ thành công! Số dư đã cập nhật.');
-      loadBalance();
+      alert('Đã gửi yêu cầu nạp thẻ! Vui lòng chờ Admin duyệt.');
       document.getElementById('card-amount').value = '';
       document.getElementById('card-serial').value = '';
       document.getElementById('card-pin').value = '';
@@ -223,9 +221,6 @@ async function napThe() {
   } catch (e) { alert('Lỗi kết nối Server'); }
 }
 
-// =========================================================
-// API SẢN PHẨM & MUA HÀNG
-// =========================================================
 async function loadProducts() {
   try {
     const r = await fetch('/api/products'); const list = await r.json();
@@ -242,7 +237,6 @@ async function loadProducts() {
 async function buyWallet(id) {
   const deviceId = getDeviceId();
   if (!confirm('Bạn có chắc muốn dùng số dư ví để mua?')) return;
-  
   try {
     const res = await fetch('/api/buy-wallet/' + id, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -250,8 +244,7 @@ async function buyWallet(id) {
     });
     const data = await res.json();
     if (!res.ok) return alert(data.error);
-    
-    alert('Mua thành công! Vui lòng chờ Admin duyệt để nhận Key.');
+    alert('Mua thành công! Vui lòng chờ Admin duyệt. Bạn có thể vào "Lịch Sử Mua" để kiểm tra.');
     loadBalance();
   } catch (e) { alert('Lỗi kết nối'); }
 }
@@ -262,7 +255,6 @@ async function buyQR(id) {
     const res = await fetch('/api/buy-qr/' + id, { method: 'POST' });
     const d = await res.json();
     if (!res.ok) return alert(d.error);
-    
     currentMemo = d.payment_code;
     document.getElementById('pay-product').textContent = d.productName;
     document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN') + 'đ';
@@ -273,14 +265,46 @@ async function buyQR(id) {
   } catch (e) { alert('Lỗi kết nối'); }
 }
 
-// =========================================================
-// API ADMIN
-// =========================================================
+async function openHistory() {
+  const deviceId = getDeviceId();
+  document.getElementById('history-modal').classList.add('active');
+  const listDiv = document.getElementById('history-list');
+  listDiv.innerHTML = '<p style="text-align:center;">Đang tải lịch sử...</p>';
+  try {
+    const res = await fetch('/api/my-history/' + deviceId);
+    const history = await res.json();
+    if (!history || history.length === 0) {
+      listDiv.innerHTML = '<p style="text-align:center; color:#aaa;">Bạn chưa có đơn hàng nào.</p>';
+      return;
+    }
+    listDiv.innerHTML = history.map(order => {
+      const prodName = order.products ? order.products.name : 'Sản phẩm';
+      if (order.status === 'paid') {
+        return `
+          <div class="key-item paid">
+            <div class="key-title">✅ ${prodName}</div>
+            <div style="color:#aaa; font-size:0.85rem; margin-bottom:5px;">Trạng thái: Đã giao Key</div>
+            <div class="key-code">${order.key_value}</div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="key-item">
+            <div class="key-title">⏳ ${prodName}</div>
+            <div style="color:#aaa; font-size:0.85rem;">Trạng thái: Đang chờ Admin duyệt. Vui lòng quay lại sau!</div>
+          </div>
+        `;
+      }
+    }).join('');
+  } catch (e) { listDiv.innerHTML = '<p style="text-align:center; color:red;">Lỗi tải lịch sử!</p>'; }
+}
+
 function showTab(id, btn) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active'); btn.classList.add('active');
   if(id==='orders') loadAdminOrders(); 
+  if(id==='cards') loadAdminCards();
   if(id==='products') loadAdminProducts(); 
 }
 
@@ -304,6 +328,26 @@ async function approve(id) {
   loadAdminOrders(); toast('Đã duyệt đơn!'); 
 }
 
+async function loadAdminCards() {
+  try {
+    const r = await fetch('/api/admin/cards'); const list = await r.json();
+    document.getElementById('admin-card-body').innerHTML = list.map(c=>`
+      <tr>
+        <td style="font-size:0.8rem;">${c.device_id}</td>
+        <td>${c.type}</td>
+        <td style="color:#ffd700">${c.amount.toLocaleString('vi-VN')}đ</td>
+        <td>${c.serial}</td>
+        <td>${c.pin}</td>
+        <td><button onclick="approveCard('${c.id}')" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button></td>
+      </tr>`).join('');
+  } catch (e) { toast('Lỗi tải thẻ'); }
+}
+
+async function approveCard(id) {
+  await fetch('/api/admin/cards/'+id+'/approve',{method:'POST'});
+  loadAdminCards(); toast('Đã duyệt thẻ và cộng tiền!');
+}
+
 async function loadAdminProducts() {
   try {
     const r = await fetch('/api/products'); const list = await r.json();
@@ -318,14 +362,13 @@ async function addProduct() {
   const price = +document.getElementById('p-price').value;
   const description = document.getElementById('p-desc').value;
   if (!name || !price) return toast('Nhập tên và giá!');
-  
   await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description})});
   loadAdminProducts(); toast('Đã thêm sản phẩm'); 
-  document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-desc').value='';
+    document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-desc').value='';
 }
 
 // =========================================================
-// CÁC HÀM PHỤ
+// HÀM PHỤ
 // =========================================================
 function copyText(text) { navigator.clipboard.writeText(text).then(() => { toast('Đã sao chép!'); }); }
 function copyMemo() { copyText(currentMemo); }
