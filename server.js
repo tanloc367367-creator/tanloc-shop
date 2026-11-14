@@ -9,9 +9,9 @@ const SECRET = 'tanloc_shop_secret_2024';
 
 // ĐIỀN THÔNG TIN TURSO CỦA BẠN VÀO ĐÂY
 const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io';
-const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ2NzA4NTgsImlkIjoiMDFhMWQ5MGEtNDAwMS03N2YwLTg4NjgtNTUxOWRjNzhjYTAwIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIyZDNiZjVkLThhY2MtNDk0Yi1hNjdlLTJlMTcwOTc2MmViZSJ9.OlkFFwsTFvffweIgfORAflymm1MyALkDXq_C7nYbSTRPXKC8bseEbqS3yVaK11jfGX8XsT48Y0NuttfNhCAIDg'; 
+const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ2NzQxNjgsImlkIjoiMDFhMWQ5MGEtNDAwMS03N2YwLTg4NjgtNTUxOWRjNzhjYTAwIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIyZDNiZjVkLThhY2MtNDk0Yi1hNjdlLTJlMTcwOTc2MmViZSJ9.irgJHZigwvp0kJX_CiKZixUaOz_zqURGXceyZVKhoJxFng7VqCMvuX26VXauHOgQBHt3uNWWIQQQftNct7GEDw'; 
 
-// Sử dụng syncUrl để tránh lỗi 502 Bad Gateway khi kết nối từ xa
+// Tối ưu kết nối cho Render (Tránh lỗi 502 do timeout)
 const db = createClient({ 
   url: TURSO_URL, 
   authToken: TURSO_TOKEN,
@@ -156,5 +156,15 @@ app.get('/api/admin/keys/:productId', auth, adminOnly, async (req, res) => {
   const rs = await db.execute({ sql: "SELECT * FROM keys WHERE product_id=? ORDER BY sold, id DESC", args: [req.params.productId] });
   res.json(rs.rows);
 });
+
+// ================= CẤU HÌNH CHẠY TRÊN RENDER =================
+const PORT = process.env.PORT || 3000;
+
+// Tạo server và cấu hình keepAlive để tránh lỗi 502 Bad Gateway
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server đang chạy trên cổng ${PORT}`);
+});
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
 
 module.exports = app;
