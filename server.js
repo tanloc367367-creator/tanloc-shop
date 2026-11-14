@@ -8,12 +8,15 @@ const app = express();
 const SECRET = 'tanloc_shop_secret_2024';
 
 // ĐIỀN THÔNG TIN TURSO CỦA BẠN VÀO ĐÂY
+const TURSO_URL = 'libsql://tanlocshop-tanloc.aws-eu-north-1.turso.io';
+const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTQ2NzA4NTgsImlkIjoiMDFhMWQ5MGEtNDAwMS03N2YwLTg4NjgtNTUxOWRjNzhjYTAwIiwia2lkIjoiY3NTWmk3MUZXdFY5cWZuNHhYWERrOGNoVGxXUW8yN18wTnNqTU55Sjg2TSIsInJpZCI6ImIyZDNiZjVkLThhY2MtNDk0Yi1hNjdlLTJlMTcwOTc2MmViZSJ9.OlkFFwsTFvffweIgfORAflymm1MyALkDXq_C7nYbSTRPXKC8bseEbqS3yVaK11jfGX8XsT48Y0NuttfNhCAIDg'; 
+
+// Sử dụng syncUrl để tránh lỗi 502 Bad Gateway khi kết nối từ xa
 const db = createClient({ 
   url: TURSO_URL, 
   authToken: TURSO_TOKEN,
-  syncUrl: TURSO_URL // Thêm dòng này để dùng cơ chế Local Replica
+  syncUrl: TURSO_URL 
 });
-const db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
 
 app.use(express.json());
 app.use(cookieParser());
