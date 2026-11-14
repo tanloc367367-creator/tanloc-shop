@@ -2,11 +2,7 @@
   "name": "tanloc-shop",
   "version": "1.0.0",
   "dependencies": {
-    "@libsql/client": "^0.6.0",
-    "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.6",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "serverless-http": "^3.2.0"
+    "mongodb": "^6.5.0"
   }
 }
