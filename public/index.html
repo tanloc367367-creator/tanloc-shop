@@ -205,7 +205,7 @@ async function napThe() {
   const amount = document.getElementById('card-amount').value;
   if (!amount) return alert('Vui lòng nhập mệnh giá thẻ!');
   
-  // Mô phỏng nạp thẻ thành công (Vì chưa có API thẻ thật)
+  // Mô phỏng nạp thẻ thành công
   const id = getDeviceId();
   try {
     const res = await fetch('/api/nap-the', {
@@ -233,8 +233,8 @@ async function loadProducts() {
       <div class="card">
         <h3>${p.name}</h3><p class="desc">${p.description || ''}</p>
         <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
-        <button class="btn" onclick="buyWallet(${p.id})" style="margin-bottom:5px;">💰 Mua bằng Ví</button>
-        <button class="btn btn-outline" onclick="buyQR(${p.id})">📱 Mua bằng QR</button>
+        <button class="btn" onclick="buyWallet('${p.id}')" style="margin-bottom:5px;">💰 Mua bằng Ví</button>
+        <button class="btn btn-outline" onclick="buyQR('${p.id}')">📱 Mua bằng QR</button>
       </div>`).join('');
   } catch (e) { toast('Lỗi tải sản phẩm!'); }
 }
@@ -343,4 +343,4 @@ function startCountdown(duration, display) {
 init();
 </script>
 </body>
- </html>
+</html>
