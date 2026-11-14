@@ -1,406 +1,118 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TÂN LỘC SHOP - Bán Key</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
-  body { background:linear-gradient(135deg,#0f0c29,#302b63,#24243e); color:#fff; min-height:100vh; padding-bottom: 50px; }
-  .hidden { display: none !important; }
-  
-  /* Topbar & Brand */
-  .topbar { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #333; max-width:1100px; margin:0 auto; }
-  .logo { font-size:1.5rem; font-weight:800; background:linear-gradient(90deg,#00f2fe,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .brand { text-align:center; padding:30px 20px 10px; }
-  .brand-name { font-size:2.5rem; font-weight:900; letter-spacing:2px; background:linear-gradient(90deg,#00f2fe,#4facfe,#a855f7,#00f2fe); background-size:300% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:shineBrand 4s linear infinite; line-height:1.2; }
-  @keyframes shineBrand { to { background-position:300% center; } }
-  .brand-sub { font-size:1rem; font-weight:700; color:#ffd700; letter-spacing:3px; margin-top:8px; text-transform:uppercase; }
+const express = require('express');
+const { createClient } = require('@supabase/supabase-js');
 
-  /* Sale Banner */
-  .sale-banner { background: linear-gradient(90deg, #f5576c, #f093fb); text-align: center; padding: 10px; font-weight: bold; font-size: 1rem; color: #fff; display: flex; justify-content: center; align-items: center; gap: 10px; }
-  .sale-banner span { font-family: monospace; font-size: 1.2rem; background: #000; padding: 2px 8px; border-radius: 5px; }
+const app = express();
+app.use(express.json());
+app.use(express.static('public'));
 
-  /* Products */
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; max-width:1100px; margin:30px auto; padding:0 20px; }
-  .card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:25px; position:relative; transition: all 0.3s ease; }
-  .card:hover { transform: translateY(-5px); border-color: #00f2fe; box-shadow: 0 10px 20px rgba(0,242,254,0.15); }
-  .card h3 { font-size:1.3rem; margin-bottom:10px; }
-  .desc { color:#aaa; font-size:0.9rem; margin-bottom:15px; min-height:40px; }
-  .price { font-size:1.8rem; font-weight:800; color:#00f2fe; margin-bottom:15px; }
-  .btn { width:100%; padding:12px; border:none; border-radius:12px; background:linear-gradient(90deg,#4facfe,#00f2fe); color:#000; font-weight:700; font-size:1rem; cursor:pointer; transition:0.2s; }
-  .btn:hover { transform:scale(1.02); }
-  .btn:disabled { opacity:0.5; cursor:not-allowed; }
-  .btn-outline { background:transparent; border:1px solid #4facfe; color:#4facfe; }
-  .btn-sm { width:auto; padding:6px 12px; font-size:0.8rem; margin:0 2px; }
+// CẤU HÌNH SUPABASE CỦA BẠN
+const SUPABASE_URL = 'https://gapwuzvjwtprhlbnejos.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_pu1h_zZ-PEAzyGgYkgT1bg_Q8Qw3rn4';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  /* Ví Điện Tử */
-  .wallet-box { max-width: 600px; margin: 30px auto; background: #1a1a2e; border: 1px solid #4facfe; border-radius: 15px; padding: 20px; text-align: center; }
-  .wallet-box h3 { color: #00f2fe; margin-bottom: 10px; }
-  .wallet-id { font-family: monospace; font-size: 1.2rem; color: #ffd700; margin: 10px 0; background: #000; padding: 5px 10px; border-radius: 5px; display: inline-block; }
-  .wallet-balance { font-size: 2rem; font-weight: 900; color: #fff; margin: 10px 0; }
-  .input-group { margin-top: 15px; text-align: left; }
-  .input-group label { font-size: 0.85rem; color: #aaa; margin-bottom: 5px; display: block; }
-  .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; margin-bottom: 10px; }
-  
-  /* Admin Tabs */
-  .admin-container { max-width: 1000px; margin: 20px auto; padding: 20px; }
-  .tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #333; overflow-x:auto; }
-  .tab { padding:12px 20px; cursor:pointer; color:#aaa; border:none; background:none; white-space:nowrap; }
-  .tab.active { color:#4facfe; border-bottom:2px solid #4facfe; }
-  .panel { display:none; } .panel.active { display:block; }
-  table { width:100%; border-collapse:collapse; background:rgba(255,255,255,0.03); margin-top:10px; }
-  th,td { padding:12px; text-align:left; border-bottom:1px solid #222; font-size:0.88rem; vertical-align:middle; }
-  th { background:rgba(79,172,254,0.15); color:#4facfe; }
-  input.admin-input { padding:8px; border-radius:6px; border:1px solid #444; background:#222; color:#fff; font-size:0.85rem; width:100%; max-width:300px; margin-right:5px;}
-
-  /* Modal */
-  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; padding:20px; }
-  .modal.active { display:flex; }
-  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; max-height: 90vh; overflow-y: auto; }
-  .qr-wrap { background:#fff; padding:15px; border-radius:12px; text-align:center; margin:15px 0; display:inline-block; }
-  .qr-wrap img { width:200px; height:200px; display:block; }
-  .bank-info { background:rgba(79,172,254,0.1); padding:15px; border-radius:12px; font-size:0.9rem; line-height:1.6; text-align:left; margin-top:15px; }
-  .bank-info b { color:#4facfe; }
-  .memo { color:#ffd700; font-family:monospace; font-weight:bold; font-size:1.1rem; }
-  .copy-btn { background: #4facfe; color: #000; border: none; padding: 4px 10px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; cursor: pointer; margin-left: 10px; }
-  
-  .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00f2fe; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; display:none; z-index:2000; }
-  .toast.show { display:block; }
-
-  /* Key Item History */
-  .key-item { background: rgba(255,255,255,0.05); border-left: 4px solid #4facfe; padding: 15px; margin-bottom: 10px; border-radius: 8px; text-align: left; }
-  .key-item.paid { border-left-color: #00f2fe; }
-  .key-item .key-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-  .key-item .key-code { background: #000; padding: 5px 10px; border-radius: 5px; font-family: monospace; color: #00f2fe; font-size: 1.1rem; display: inline-block; margin-top: 5px; letter-spacing: 1px;}
-</style>
-</head>
-<body>
-
-<!-- TRANG KHÁCH HÀNG -->
-<div id="page-home">
-  <div class="sale-banner">🔥 FLASH SALE KẾT THÚC SAU: <span id="countdown">02:00:00</span> 🔥</div>
-  <div class="topbar">
-    <div class="logo">🔑 TÂN LỘC</div>
-    <button onclick="openHistory()" class="btn btn-sm" style="background:rgba(0,242,254,0.2); color:#00f2fe; border:1px solid #00f2fe;">🧾 Lịch Sử Mua</button>
-  </div>
-  <div class="brand"><div class="brand-name">VOHOAINAM.NET</div><div class="brand-sub">SHOP BÁN KEY TANLOC!</div></div>
-
-  <!-- VÍ ĐIỆN TỬ & NẠP THẺ -->
-  <div class="wallet-box">
-    <h3>💳 VÍ ĐIỆN TỬ CỦA BẠN</h3>
-    <p style="font-size: 0.9rem; color: #aaa;">Mã Ví (Lưu lại để không mất tiền):</p>
-    <div class="wallet-id" id="my-vip-code">Đang tải...</div>
-    <p style="font-size: 0.9rem; color: #aaa;">Số dư hiện tại:</p>
-    <div class="wallet-balance" id="my-balance">0 đ</div>
-    
-    <hr style="border-color: #333; margin: 20px 0;">
-    
-    <h3 style="color: #ffd700;">💳 NẠP THẺ CÀO</h3>
-    <div class="input-group">
-      <select id="card-type">
-        <option value="VIETTEL">Viettel</option>
-        <option value="MOBIFONE">Mobifone</option>
-        <option value="VINAPHONE">Vinaphone</option>
-      </select>
-      <input id="card-amount" type="number" placeholder="Mệnh giá (VD: 10000)">
-      <input id="card-serial" placeholder="Số Seri">
-      <input id="card-pin" placeholder="Mã Thẻ">
-      <button onclick="napThe()" class="btn">Nạp Tiền</button>
-    </div>
-  </div>
-
-  <div class="grid" id="products-list"></div>
-</div>
-
-<!-- TRANG ADMIN (BÍ MẬT) -->
-<div id="page-admin" class="hidden admin-container">
-  <div style="display:flex;justify-content:space-between;margin-bottom:20px; align-items:center;">
-    <h1 style="color:#00f2fe;">⚙️ Admin Panel</h1>
-    <a href="/" class="btn btn-sm" style="background:#f5576c;color:#fff;text-decoration:none;padding:10px 20px;">Thoát Admin</a>
-  </div>
-  
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
-    <button class="tab" onclick="showTab('products',this)">📦 Quản lý Sản phẩm</button>
-  </div>
-  
-  <div class="panel active" id="orders">
-    <table><thead><tr><th>Mã ĐH</th><th>Khách (Ví)</th><th>SP</th><th>Key đã giao</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table>
-  </div>
-  
-  <div class="panel" id="products">
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm sản phẩm mới</h2>
-    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
-      <input id="p-name" placeholder="Tên sản phẩm (VD: Gói VIP)" class="admin-input" style="max-width:200px;">
-      <input id="p-price" type="number" placeholder="Giá (đ)" class="admin-input" style="max-width:120px;">
-      <input id="p-desc" placeholder="Mô tả" class="admin-input" style="max-width:250px;">
-      <button onclick="addProduct()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm SP</button>
-    </div>
-    <table><thead><tr><th>Tên SP</th><th>Giá</th><th>Mô tả</th></tr></thead><tbody id="admin-prod-body"></tbody></table>
-  </div>
-</div>
-
-<!-- MODAL THANH TOÁN -->
-<div class="modal" id="pay-modal">
-  <div class="modal-box">
-    <h3 style="color:#4facfe; margin-bottom:15px;">💳 Thanh toán</h3>
-    <p id="pay-product" style="font-weight:bold; margin-bottom:10px;"></p>
-    <p id="pay-amount" style="font-size:2rem; color:#00f2fe; font-weight:900; margin-bottom:15px;"></p>
-    <div class="qr-wrap"><img id="pay-qr"></div>
-    <div class="bank-info">
-      <p>🏦 <b>Ngân hàng:</b> MB Bank <button class="copy-btn" onclick="copyText('MB Bank')">Copy</button></p>
-      <p>💳 <b>STK:</b> <span id="txt-stk">0123456789</span> <button class="copy-btn" onclick="copyText('0123456789')">Copy</button></p>
-      <p>👤 <b>Chủ TK:</b> NGUYEN VAN A</p>
-      <p>📝 <b>Nội dung CK:</b> <span class="memo" id="pay-memo"></span> <button class="copy-btn" onclick="copyMemo()">Copy</button></p>
-    </div>
-    <p style="font-size:0.85rem; color:#ffd700; margin-top:15px;">👉 Chuyển khoản đúng nội dung, sau đó nhắn Zalo/Telegram để nhận Key!</p>
-    <button class="btn" onclick="document.getElementById('pay-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
-  </div>
-</div>
-
-<!-- MODAL LỊCH SỬ MUA -->
-<div class="modal" id="history-modal">
-  <div class="modal-box" style="max-width: 600px; text-align: left;">
-    <h3 style="color:#4facfe; margin-bottom:15px; text-align: center;">🧾 Lịch Sử Mua Key</h3>
-    <div id="history-list" style="max-height: 60vh; overflow-y: auto; padding-right: 5px;">
-      <!-- Nội dung lịch sử sẽ được render ở đây -->
-    </div>
-    <button class="btn" onclick="document.getElementById('history-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
-  </div>
-</div>
-
-<div class="toast" id="toast">Đã sao chép!</div>
-
-<script>
-// =========================================================
-// CẤU HÌNH
-// =========================================================
-const isAdmin = window.location.hash === '#admintanlocdepzai';
-const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A' };
-
-function getDeviceId() {
-  let id = localStorage.getItem('vip_code');
-  if (!id) {
-    id = 'VIP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    localStorage.setItem('vip_code', id);
-  }
-  return id;
-}
-
-function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
-
-async function init() {
-  if (isAdmin) {
-    document.getElementById('page-home').classList.add('hidden');
-    document.getElementById('page-admin').classList.remove('hidden');
-    loadAdminOrders();
-    loadAdminProducts();
-  } else {
-    document.getElementById('page-admin').classList.add('hidden');
-    document.getElementById('page-home').classList.remove('hidden');
-    document.getElementById('my-vip-code').textContent = getDeviceId();
-    loadBalance();
-    loadProducts();
-    startCountdown(2 * 60 * 60, document.querySelector('#countdown'));
-  }
-}
-
-// =========================================================
-// API VÍ ĐIỆN TỬ & NẠP THẺ
-// =========================================================
-async function loadBalance() {
-  const id = getDeviceId();
+// ================= API KHÁCH HÀNG =================
+app.get('/api/products', async (req, res) => {
   try {
-    const res = await fetch('/api/get-balance/' + id);
-    const data = await res.json();
-    document.getElementById('my-balance').textContent = data.balance.toLocaleString('vi-VN') + ' đ';
-  } catch (e) { console.log('Lỗi tải số dư'); }
-}
+    const { data, error } = await supabase.from('products').select('*');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-async function napThe() {
-  const amount = document.getElementById('card-amount').value;
-  if (!amount) return alert('Vui lòng nhập mệnh giá thẻ!');
-  
-  const id = getDeviceId();
+app.get('/api/get-balance/:deviceId', async (req, res) => {
   try {
-    const res = await fetch('/api/nap-the', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ deviceId: id, amount })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      alert('Nạp thẻ thành công! Số dư đã cập nhật.');
-      loadBalance();
-      document.getElementById('card-amount').value = '';
-      document.getElementById('card-serial').value = '';
-      document.getElementById('card-pin').value = '';
+    const { deviceId } = req.params;
+    let { data, error } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+    if (error && error.code === 'PGRST116') {
+      await supabase.from('users').insert([{ device_id: deviceId, balance: 0 }]);
+      return res.json({ balance: 0 });
     }
-  } catch (e) { alert('Lỗi kết nối Server'); }
-}
+    if (error) throw error;
+    res.json({ balance: data.balance });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-// =========================================================
-// API SẢN PHẨM & MUA HÀNG
-// =========================================================
-async function loadProducts() {
+app.post('/api/nap-the', async (req, res) => {
   try {
-    const r = await fetch('/api/products'); const list = await r.json();
-    document.getElementById('products-list').innerHTML = list.map(p => `
-      <div class="card">
-        <h3>${p.name}</h3><p class="desc">${p.description || ''}</p>
-        <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
-        <button class="btn" onclick="buyWallet('${p.id}')" style="margin-bottom:5px;">💰 Mua bằng Ví</button>
-        <button class="btn btn-outline" onclick="buyQR('${p.id}')">📱 Mua bằng QR</button>
-      </div>`).join('');
-  } catch (e) { toast('Lỗi tải sản phẩm!'); }
-}
-
-async function buyWallet(id) {
-  const deviceId = getDeviceId();
-  if (!confirm('Bạn có chắc muốn dùng số dư ví để mua?')) return;
-  
-  try {
-    const res = await fetch('/api/buy-wallet/' + id, {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ deviceId })
-    });
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
-    
-    alert('Mua thành công! Vui lòng chờ Admin duyệt. Bạn có thể vào "Lịch Sử Mua" để kiểm tra.');
-    loadBalance();
-  } catch (e) { alert('Lỗi kết nối'); }
-}
-
-let currentMemo = '';
-async function buyQR(id) {
-  try {
-    const res = await fetch('/api/buy-qr/' + id, { method: 'POST' });
-    const d = await res.json();
-    if (!res.ok) return alert(d.error);
-    
-    currentMemo = d.payment_code;
-    document.getElementById('pay-product').textContent = d.productName;
-    document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN') + 'đ';
-    document.getElementById('pay-memo').textContent = currentMemo;
-    document.getElementById('txt-stk').textContent = BANK.account;
-    document.getElementById('pay-qr').src = `https://img.vietqr.io/image/${BANK.bankId}-${BANK.account}-compact2.png?amount=${d.amount}&addInfo=${currentMemo}&accountName=${encodeURIComponent(BANK.name)}`;
-    document.getElementById('pay-modal').classList.add('active');
-  } catch (e) { alert('Lỗi kết nối'); }
-}
-
-// =========================================================
-// LỊCH SỬ MUA KEY (DÀNH CHO KHÁCH)
-// =========================================================
-async function openHistory() {
-  const deviceId = getDeviceId();
-  document.getElementById('history-modal').classList.add('active');
-  const listDiv = document.getElementById('history-list');
-  listDiv.innerHTML = '<p style="text-align:center;">Đang tải lịch sử...</p>';
-  
-  try {
-    const res = await fetch('/api/my-history/' + deviceId);
-    const history = await res.json();
-    
-    if (!history || history.length === 0) {
-      listDiv.innerHTML = '<p style="text-align:center; color:#aaa;">Bạn chưa có đơn hàng nào.</p>';
-      return;
+    const { deviceId, amount } = req.body;
+    let { data } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+    const newBalance = (data?.balance || 0) + Number(amount);
+    if (data) {
+      await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
+    } else {
+      await supabase.from('users').insert([{ device_id: deviceId, balance: newBalance }]);
     }
-    
-    listDiv.innerHTML = history.map(order => {
-      // Tìm tên sản phẩm (nếu API trả về)
-      const prodName = order.products ? order.products.name : 'Sản phẩm';
-      
-      if (order.status === 'paid') {
-        return `
-          <div class="key-item paid">
-            <div class="key-title">✅ ${prodName}</div>
-            <div style="color:#aaa; font-size:0.85rem; margin-bottom:5px;">Trạng thái: Đã giao Key</div>
-            <div class="key-code">${order.key_value}</div>
-          </div>
-        `;
-      } else {
-        return `
-          <div class="key-item">
-            <div class="key-title">⏳ ${prodName}</div>
-            <div style="color:#aaa; font-size:0.85rem;">Trạng thái: Đang chờ Admin duyệt. Vui lòng quay lại sau!</div>
-          </div>
-        `;
-      }
-    }).join('');
-  } catch (e) {
-    listDiv.innerHTML = '<p style="text-align:center; color:red;">Lỗi tải lịch sử!</p>';
-  }
-}
+    res.json({ ok: true, balance: newBalance });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-// =========================================================
-// API ADMIN
-// =========================================================
-function showTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  document.getElementById(id).classList.add('active'); btn.classList.add('active');
-  if(id==='orders') loadAdminOrders(); 
-  if(id==='products') loadAdminProducts(); 
-}
-
-async function loadAdminOrders() {
+app.post('/api/buy-wallet/:productId', async (req, res) => {
   try {
-    const r = await fetch('/api/admin/orders'); const list = await r.json();
-    document.getElementById('admin-order-body').innerHTML = list.map(o=>`
-      <tr>
-        <td><b style="color:#ffd700">${o.payment_code || 'Mua Ví'}</b></td>
-        <td style="font-size:0.8rem;">${o.device_id || '-'}</td>
-        <td>${o.product_id}</td>
-        <td style="color:#00f2fe; font-family:monospace;">${o.key_value || '-'}</td>
-        <td>${o.status}</td>
-        <td>${o.status !== 'paid' ? `<button onclick="approve('${o.id}')" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button>` : ''}</td>
-      </tr>`).join('');
-  } catch (e) { toast('Lỗi tải đơn hàng'); }
-}
+    const { deviceId } = req.body;
+    const { productId } = req.params;
+    const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
+    const { data: user } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+    if (!product || !user) return res.status(404).json({ error: 'Không tìm thấy' });
+    if (user.balance < product.price) return res.status(400).json({ error: 'Số dư không đủ!' });
+    const newBalance = user.balance - product.price;
+    await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
+    await supabase.from('orders').insert([{ device_id: deviceId, product_id: productId, amount: product.price, status: 'waiting', payment_code: 'VIP' }]);
+    res.json({ ok: true, balance: newBalance });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-async function approve(id) { 
-  await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); 
-  loadAdminOrders(); toast('Đã duyệt đơn!'); 
-}
-
-async function loadAdminProducts() {
+app.post('/api/buy-qr/:productId', async (req, res) => {
   try {
-    const r = await fetch('/api/products'); const list = await r.json();
-    document.getElementById('admin-prod-body').innerHTML = list.map(p=>`
-      <tr><td>${p.name}</td><td>${p.price.toLocaleString('vi-VN')}đ</td><td>${p.description||''}</td></tr>
-    `).join('');
-  } catch (e) { toast('Lỗi tải sản phẩm'); }
-}
+    const { productId } = req.params;
+    const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
+    const payment_code = 'DH' + Date.now().toString().slice(-6);
+    await supabase.from('orders').insert([{ product_id: productId, amount: product.price, status: 'pending', payment_code }]);
+    res.json({ ok: true, payment_code, amount: product.price, productName: product.name });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-async function addProduct() {
-  const name = document.getElementById('p-name').value;
-  const price = +document.getElementById('p-price').value;
-  const description = document.getElementById('p-desc').value;
-  if (!name || !price) return toast('Nhập tên và giá!');
-  
-  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description})});
-  loadAdminProducts(); toast('Đã thêm sản phẩm'); 
-  document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-desc').value='';
-}
+// Lấy lịch sử mua hàng của khách
+app.get('/api/my-history/:deviceId', async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*, products(name)')
+      .eq('device_id', deviceId)
+      .order('id', { ascending: false });
+    if (error) throw error;
+    res.json(orders);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-// =========================================================
-// HÀM PHỤ
-// =========================================================
-function copyText(text) { navigator.clipboard.writeText(text).then(() => { toast('Đã sao chép!'); }); }
-function copyMemo() { copyText(currentMemo); }
+// ================= API ADMIN =================
+app.get('/api/admin/orders', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('orders').select('*').order('id', { ascending: false });
+    if (error) throw error;
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-function startCountdown(duration, display) {
-  let timer = duration, hours, minutes, seconds;
-  setInterval(function () {
-    hours = parseInt(timer / 3600, 10); minutes = parseInt((timer % 3600) / 60, 10); seconds = parseInt(timer % 60, 10);
-    hours = hours < 10 ? "0" + hours : hours; minutes = minutes < 10 ? "0" + minutes : minutes; seconds = seconds < 10 ? "0" + seconds : seconds;
-    display.textContent = hours + ":" + minutes + ":" + seconds;
-    if (--timer < 0) timer = duration;
-  }, 1000);
-}
+app.post('/api/admin/orders/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const keyValue = 'KEY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    await supabase.from('orders').update({ status: 'paid', key_value: keyValue }).eq('id', id);
+    res.json({ ok: true, key: keyValue });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-init();
-</script>
-</body>
-</html>
+app.post('/api/admin/products', async (req, res) => {
+  try {
+    const { name, price, description } = req.body;
+    await supabase.from('products').insert([{ name, price, description }]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Khởi chạy
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server chạy cổng ${PORT}`));
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
