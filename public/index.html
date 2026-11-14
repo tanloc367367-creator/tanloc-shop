@@ -107,7 +107,8 @@
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
     <button class="tab" onclick="showTab('cards',this)">💳 Duyệt Thẻ</button>
-    <button class="tab" onclick="showTab('products',this)">📦 Quản lý Sản phẩm</button>
+    <button class="tab" onclick="showTab('keys',this)">🔑 Kho Key</button>
+    <button class="tab" onclick="showTab('products',this)">📦 Sản phẩm</button>
   </div>
   
   <div class="panel active" id="orders">
@@ -116,6 +117,17 @@
 
   <div class="panel" id="cards">
     <table><thead><tr><th>Khách (Ví)</th><th>Loại thẻ</th><th>Mệnh giá</th><th>Seri</th><th>Mã thẻ</th><th>Hành động</th></tr></thead><tbody id="admin-card-body"></tbody></table>
+  </div>
+
+  <div class="panel" id="keys">
+    <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm Key vào kho</h2>
+    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+      <select id="key-product" class="admin-input" style="max-width:200px;"></select>
+      <input id="key-value" placeholder="Mã Key (VD: KEY-ABC)" class="admin-input" style="max-width:200px;">
+      <input id="key-quantity" type="number" placeholder="Số lượng" class="admin-input" style="max-width:100px;" value="1">
+      <button onclick="addKey()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm Key</button>
+    </div>
+    <table><thead><tr><th>Sản phẩm</th><th>Mã Key</th><th>Trạng thái</th></tr></thead><tbody id="admin-key-body"></tbody></table>
   </div>
   
   <div class="panel" id="products">
@@ -179,6 +191,7 @@ async function init() {
     loadAdminOrders();
     loadAdminCards();
     loadAdminProducts();
+    loadKeySelect();
   } else {
     document.getElementById('page-admin').classList.add('hidden');
     document.getElementById('page-home').classList.remove('hidden');
@@ -306,6 +319,7 @@ function showTab(id, btn) {
   if(id==='orders') loadAdminOrders(); 
   if(id==='cards') loadAdminCards();
   if(id==='products') loadAdminProducts(); 
+  if(id==='keys') loadAdminKeys();
 }
 
 async function loadAdminOrders() {
@@ -344,8 +358,14 @@ async function loadAdminCards() {
 }
 
 async function approveCard(id) {
-  await fetch('/api/admin/cards/'+id+'/approve',{method:'POST'});
-  loadAdminCards(); toast('Đã duyệt thẻ và cộng tiền!');
+  await fetch('/api/admin/cards/' + id + '/approve', { method: 'POST' });
+      toast('Đã duyệt thẻ và cộng tiền!');
+}
+
+// TẢI DANH SÁCH SẢN PHẨM VÀO Ô SELECT CỦA KHO KEY
+async function loadKeySelect() {
+  const r = await fetch('/api/products'); const list = await r.json();
+  document.getElementById('key-product').innerHTML = list.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
 }
 
 async function loadAdminProducts() {
@@ -354,6 +374,7 @@ async function loadAdminProducts() {
     document.getElementById('admin-prod-body').innerHTML = list.map(p=>`
       <tr><td>${p.name}</td><td>${p.price.toLocaleString('vi-VN')}đ</td><td>${p.description||''}</td></tr>
     `).join('');
+    loadKeySelect();
   } catch (e) { toast('Lỗi tải sản phẩm'); }
 }
 
@@ -364,12 +385,55 @@ async function addProduct() {
   if (!name || !price) return toast('Nhập tên và giá!');
   await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description})});
   loadAdminProducts(); toast('Đã thêm sản phẩm'); 
-    document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-desc').value='';
+  document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-desc').value='';
 }
 
 // =========================================================
-// HÀM PHỤ
+// HÀM THÊM KEY VÀO KHO
 // =========================================================
+async function addKey() {
+  const product_id = document.getElementById('key-product').value;
+  const key_value = document.getElementById('key-value').value;
+  const quantity = document.getElementById('key-quantity').value || 1;
+
+  if (!key_value) return toast('Vui lòng nhập mã Key!');
+  
+  try {
+    const res = await fetch('/api/admin/keys', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ product_id, key_value, quantity })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      toast(data.message);
+      document.getElementById('key-value').value = '';
+      document.getElementById('key-quantity').value = '1';
+      loadAdminKeys();
+    } else { toast(data.error); }
+  } catch (e) { toast('Lỗi kết nối'); }
+}
+
+// =========================================================
+// HÀM LẤY DANH SÁCH KEY TRONG KHO
+// =========================================================
+async function loadAdminKeys() {
+  try {
+    const productId = document.getElementById('key-product').value;
+    if(!productId) return;
+
+    const r = await fetch('/api/admin/keys/' + productId);
+    const list = await r.json();
+    
+    document.getElementById('admin-key-body').innerHTML = list.map(k=>`
+      <tr>
+        <td>${k.product_id}</td>
+        <td style="color:#00f2fe; font-family:monospace;">${k.key_value}</td>
+        <td style="color:${k.sold ? '#f5576c' : '#00f2fe'}">${k.sold ? 'Đã bán' : 'Chưa bán'}</td>
+      </tr>
+    `).join('');
+  } catch (e) { toast('Lỗi tải danh sách key'); }
+}
+
 function copyText(text) { navigator.clipboard.writeText(text).then(() => { toast('Đã sao chép!'); }); }
 function copyMemo() { copyText(currentMemo); }
 
