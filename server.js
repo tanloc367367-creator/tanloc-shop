@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // ĐIỀN LINK MONGODB CỦA BẠN VÀO ĐÂY
-const MONGO_URI = 'mongodb+srv://tanloc367367_db_user:tuaYwBOMHrrUmV0f@cluster0.om1abj.mongodb.net/?retryWrites=true&w=majority'; 
+const MONGO_URI = 'mongodb://tanloc367367_db_user:<db_password>@ac-huokco0-shard-00-00.oomiabj.mongodb.net:27017,ac-huokco0-shard-00-01.oomiabj.mongodb.net:27017,ac-huokco0-shard-00-02.oomiabj.mongodb.net:27017/?ssl=true&replicaSet=atlas-sin0iu-shard-0&authSource=admin'; 
 
 const client = new MongoClient(MONGO_URI);
 let db;
