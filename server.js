@@ -5,7 +5,6 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// CẤU HÌNH SUPABASE CỦA BẠN
 const SUPABASE_URL = 'https://gapwuzvjwtprhlbnejos.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_pu1h_zZ-PEAzyGgYkgT1bg_Q8Qw3rn4';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -32,17 +31,21 @@ app.get('/api/get-balance/:deviceId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Gửi yêu cầu nạp thẻ (Chờ duyệt)
 app.post('/api/nap-the', async (req, res) => {
   try {
-    const { deviceId, amount } = req.body;
-    let { data } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
-    const newBalance = (data?.balance || 0) + Number(amount);
-    if (data) {
-      await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
-    } else {
-      await supabase.from('users').insert([{ device_id: deviceId, balance: newBalance }]);
-    }
-    res.json({ ok: true, balance: newBalance });
+    const { deviceId, amount, type, serial, pin } = req.body;
+    // Lưu vào bảng cards với trạng thái pending
+    const { error } = await supabase.from('cards').insert([{ 
+      device_id: deviceId, 
+      amount: Number(amount), 
+      type, 
+      serial, 
+      pin, 
+      status: 'pending' 
+    }]);
+    if (error) throw error;
+    res.json({ ok: true, message: 'Đã gửi yêu cầu nạp thẻ, vui lòng chờ Admin duyệt!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -71,7 +74,6 @@ app.post('/api/buy-qr/:productId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy lịch sử mua hàng của khách
 app.get('/api/my-history/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -103,6 +105,39 @@ app.post('/api/admin/orders/:id/approve', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Admin lấy danh sách thẻ chờ duyệt
+app.get('/api/admin/cards', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('cards').select('*').eq('status', 'pending').order('id', { ascending: false });
+    if (error) throw error;
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin duyệt thẻ
+app.post('/api/admin/cards/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Lấy thông tin thẻ
+    const { data: card } = await supabase.from('cards').select('*').eq('id', id).single();
+    if (!card) return res.status(404).json({ error: 'Không tìm thấy thẻ' });
+
+    // Cộng tiền cho user
+    const { data: user } = await supabase.from('users').select('balance').eq('device_id', card.device_id).single();
+    const newBalance = (user?.balance || 0) + card.amount;
+    
+    if (user) {
+      await supabase.from('users').update({ balance: newBalance }).eq('device_id', card.device_id);
+    } else {
+      await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance }]);
+    }
+
+    // Đổi trạng thái thẻ thành đã duyệt
+    await supabase.from('cards').update({ status: 'approved' }).eq('id', id);
+    res.json({ ok: true, message: 'Đã duyệt thẻ và cộng tiền!' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/admin/products', async (req, res) => {
   try {
     const { name, price, description } = req.body;
@@ -111,7 +146,6 @@ app.post('/api/admin/products', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Khởi chạy
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server chạy cổng ${PORT}`));
 server.keepAliveTimeout = 120000;
