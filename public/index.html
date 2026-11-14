@@ -31,9 +31,12 @@
   th { background:rgba(79,172,254,0.15); color:#4facfe; }
   .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; }
   .modal.active { display:flex; }
-  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; }
+  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; }
   .qr-wrap { background:#fff; padding:15px; border-radius:12px; text-align:center; margin:15px 0; }
   .qr-wrap img { width:200px; height:200px; }
+  .bank-info { background:rgba(79,172,254,0.1); padding:15px; border-radius:12px; font-size:0.9rem; line-height:1.6; text-align:left; margin-top:15px; }
+  .bank-info b { color:#4facfe; }
+  .memo { color:#ffd700; font-family:monospace; font-weight:bold; font-size:1.1rem; }
   .toast { position:fixed; top:20px; right:20px; background:#1a1a2e; border:1px solid #4facfe; padding:15px; border-radius:12px; display:none; z-index:2000; }
   .toast.show { display:block; }
   input.admin-input { padding:8px; border-radius:6px; border:1px solid #444; background:#222; color:#fff; font-size:0.85rem; width:100%; max-width:300px; }
@@ -83,12 +86,17 @@
 <!-- MODAL THANH TOÁN -->
 <div class="modal" id="pay-modal">
   <div class="modal-box">
-    <h3 style="text-align:center;">Thanh toán</h3>
-    <p id="pay-product" style="text-align:center;"></p>
-    <p id="pay-amount" style="text-align:center;font-size:2rem;color:#00f2fe;"></p>
+    <h3 style="color:#4facfe; margin-bottom:15px;">💳 Thanh toán</h3>
+    <p id="pay-product" style="font-weight:bold; margin-bottom:10px;"></p>
+    <p id="pay-amount" style="font-size:2rem; color:#00f2fe; font-weight:900; margin-bottom:15px;"></p>
     <div class="qr-wrap"><img id="pay-qr"></div>
-    <p style="text-align:center;font-size:0.9rem;">Nội dung CK: <b id="pay-memo" style="color:#ffd700; font-size:1.2rem;"></b></p>
-    <p style="text-align:center; font-size:0.8rem; color:#aaa; margin-top:10px;">(Chuyển khoản xong, vui lòng nhắn Zalo để nhận Key)</p>
+    <div class="bank-info">
+      <p>🏦 <b>Ngân hàng:</b> MB Bank</p>
+      <p>💳 <b>STK:</b> 0123456789</p>
+      <p>👤 <b>Chủ TK:</b> NGUYEN VAN A</p>
+      <p>📝 <b>Nội dung CK:</b> <span class="memo" id="pay-memo"></span></p>
+    </div>
+    <p style="font-size:0.85rem; color:#ffd700; margin-top:15px;">👉 Chuyển khoản đúng nội dung, sau đó nhắn Zalo/Telegram để nhận Key!</p>
     <button class="btn" onclick="document.getElementById('pay-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
   </div>
 </div>
@@ -96,9 +104,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// === CƠ CHẾ BẢO MẬT BẰNG LINK ===
-// Nếu trên thanh địa chỉ có chứa #admintanlocdepzai thì sẽ mở trang Admin
 const isAdmin = window.location.hash === '#admintanlocdepzai';
+const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A' };
 
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 
@@ -121,22 +128,23 @@ async function loadProducts() {
     const r = await fetch('/api/products'); const list = await r.json();
     document.getElementById('products-list').innerHTML = list.map(p => `
       <div class="card">
-        <h3>${p.name}</h3><p class="desc">${p.description||''}</p>
+        <h3>${p.name}</h3><p class="desc">${p.desc||''}</p>
         <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
         <div class="stock" style="background:${p.stock>0?'#00f2fe22':'#f5576c22'};color:${p.stock>0?'#00f2fe':'#f5576c'}">${p.stock>0?`Còn ${p.stock} key`:'Hết key'}</div>
-        <button class="btn" ${p.stock<=0?'disabled':''} onclick="buyKey(${p.id})">Mua ngay</button>
+        <button class="btn" ${p.stock<=0?'disabled':''} onclick="buyKey('${p.id}', '${p.name}', ${p.price})">Mua ngay</button>
       </div>`).join('');
   } catch (e) { toast('Lỗi tải sản phẩm!'); }
 }
 
-async function buyKey(id) {
+async function buyKey(id, name, price) {
   try {
     const r = await fetch('/api/buy/'+id,{method:'POST'}); const d = await r.json();
     if(!r.ok) return toast(d.error);
+    
     document.getElementById('pay-product').textContent = d.productName;
     document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN')+'đ';
     document.getElementById('pay-memo').textContent = d.payment_code;
-    document.getElementById('pay-qr').src = `https://img.vietqr.io/image/970422-0123456789-compact2.png?amount=${d.amount}&addInfo=${d.payment_code}`;
+    document.getElementById('pay-qr').src = `https://img.vietqr.io/image/${BANK.bankId}-${BANK.account}-compact2.png?amount=${d.amount}&addInfo=${d.payment_code}`;
     document.getElementById('pay-modal').classList.add('active');
   } catch (e) { toast('Lỗi kết nối'); }
 }
@@ -153,7 +161,7 @@ function showTab(id, btn) {
 async function loadAdminOrders() {
   try {
     const r = await fetch('/api/admin/orders'); const list = await r.json();
-    document.getElementById('admin-order-body').innerHTML = list.map(o=>`<tr><td><b style="color:#ffd700">${o.payment_code}</b></td><td>${o.product_name}</td><td style="color:#00f2fe; font-family:monospace;">${o.key_value||'-'}</td><td>${o.status}</td><td>${o.status==='pending'?`<button onclick="approve(${o.id})" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button>`:''}</td></tr>`).join('');
+    document.getElementById('admin-order-body').innerHTML = list.map(o=>`<tr><td><b style="color:#ffd700">${o.payment_code}</b></td><td>${o.product_name}</td><td style="color:#00f2fe; font-family:monospace;">${o.key_value||'-'}</td><td>${o.status}</td><td>${o.status==='pending'?`<button onclick="approve('${o._id}')" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button>`:''}</td></tr>`).join('');
   } catch (e) { toast('Lỗi tải đơn hàng'); }
 }
 
@@ -173,7 +181,7 @@ async function loadAdminProducts() {
         <td>
           <div style="display:flex; gap:5px;">
             <input type="text" id="key-input-${p.id}" class="admin-input" placeholder="Nhập danh sách key...">
-            <button onclick="addKeyInline(${p.id})" class="btn btn-sm" style="background:#00f2fe; white-space:nowrap;">Thêm</button>
+            <button onclick="addKeyInline('${p.id}')" class="btn btn-sm" style="background:#00f2fe; white-space:nowrap;">Thêm</button>
           </div>
         </td>
       </tr>
@@ -204,7 +212,7 @@ async function addProduct() {
   const price = +document.getElementById('p-price').value;
   if (!name || !price) return toast('Nhập tên và giá!');
   
-  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description:'',badge:''})});
+  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,desc:''})});
   loadAdminProducts(); toast('Đã thêm sản phẩm'); 
   document.getElementById('p-name').value=''; document.getElementById('p-price').value='';
 }
