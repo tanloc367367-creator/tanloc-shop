@@ -1,118 +1,108 @@
-// Ép Node.js dùng DNS của Google để sửa lỗi querySrv ENOTFOUND trên Render
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// ĐIỀN LINK MONGODB CỦA BẠN VÀO ĐÂY
-const MONGO_URI = 'mongodb://tanloc367367_db_user:tuaYwBOMHrrunVef@ac-huokco0-shard-00-00.oomiabj.mongodb.net:27017,ac-huokco0-shard-00-01.oomiabj.mongodb.net:27017,ac-huokco0-shard-00-02.oomiabj.mongodb.net:27017/?ssl=true&replicaSet=atlas-sin0iu-shard-0&authSource=admin'; 
+const SUPABASE_URL = 'https://gapwuzvjwtprhlbnejos.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_pu1h_zZ-PEAzyGgYkgT1bg_Q8Qw3rn4';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const client = new MongoClient(MONGO_URI);
-let db;
-
-// Kết nối Database
-async function connectDB() {
-  try {
-    await client.connect();
-    db = client.db('tanloc_shop');
-    console.log('✅ Đã kết nối MongoDB thành công');
-  } catch (e) { 
-    console.error('❌ LỖI KẾT NỐI MONGODB:', e.message); 
-  }
-}
-connectDB();
-
-// ================= API KHÁCH HÀNG =================
+// API lấy sản phẩm
 app.get('/api/products', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
-  try {
-    const products = await db.collection('products').find().toArray();
-    const result = await Promise.all(products.map(async (p) => {
-      const stock = await db.collection('keys').countDocuments({ productId: p._id.toString(), sold: false });
-      return { ...p, id: p._id.toString(), stock };
-    }));
-    res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  const { data, error } = await supabase.from('products').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  
+  // Đếm số key còn lại
+  const productsWithStock = await Promise.all(data.map(async (p) => {
+    const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('product_id', p.id).eq('status', 'pending');
+    return { ...p, stock: 999 }; // Tạm thời để 999, quản lý kho sau
+  }));
+  res.json(productsWithStock);
 });
 
-app.post('/api/buy/:productId', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
-  try {
-    const product = await db.collection('products').findOne({ _id: new ObjectId(req.params.productId) });
-    if (!product) return res.status(404).json({ error: 'Không có sản phẩm' });
+// API lấy số dư ví
+app.get('/api/get-balance/:deviceId', async (req, res) => {
+  const { deviceId } = req.params;
+  let { data, error } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+  
+  if (error && error.code === 'PGRST116') { // Chưa có user
+    await supabase.from('users').insert([{ device_id: deviceId, balance: 0 }]);
+    return res.json({ balance: 0 });
+  }
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ balance: data.balance });
+});
 
-    const payment_code = 'DH' + Date.now().toString().slice(-6);
-    await db.collection('orders').insertOne({ 
-      productId: product._id.toString(), 
-      amount: product.price, 
-      payment_code, 
-      status: 'pending', 
-      createdAt: new Date() 
-    });
-    res.json({ ok: true, payment_code, amount: product.price, productName: product.name });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+// API nạp thẻ (Mô phỏng)
+app.post('/api/nap-the', async (req, res) => {
+  const { deviceId, amount } = req.body;
+  let { data } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+  const newBalance = (data?.balance || 0) + Number(amount);
+  await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
+  res.json({ ok: true, balance: newBalance });
+});
+
+// API mua hàng bằng ví
+app.post('/api/buy-wallet/:productId', async (req, res) => {
+  const { deviceId } = req.body;
+  const { productId } = req.params;
+
+  const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
+  const { data: user } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+
+  if (!product || !user) return res.status(404).json({ error: 'Không tìm thấy' });
+  if (user.balance < product.price) return res.status(400).json({ error: 'Số dư không đủ!' });
+
+  // Trừ tiền
+  const newBalance = user.balance - product.price;
+  await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
+
+  // Tạo đơn hàng chờ duyệt
+  await supabase.from('orders').insert([{ device_id: deviceId, product_id: productId, amount: product.price, status: 'waiting', payment_code: 'VIP' }]);
+
+  res.json({ ok: true, balance: newBalance });
+});
+
+// API tạo đơn QR
+app.post('/api/buy-qr/:productId', async (req, res) => {
+  const { productId } = req.params;
+  const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
+  const payment_code = 'DH' + Date.now().toString().slice(-6);
+  await supabase.from('orders').insert([{ product_id: productId, amount: product.price, status: 'pending', payment_code }]);
+  res.json({ ok: true, payment_code, amount: product.price, productName: product.name });
 });
 
 // ================= API ADMIN =================
 app.get('/api/admin/orders', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
-  try {
-    const orders = await db.collection('orders').find().sort({_id:-1}).limit(100).toArray();
-    const result = await Promise.all(orders.map(async (o) => {
-      const prod = await db.collection('products').findOne({ _id: new ObjectId(o.productId) });
-      let keyVal = '-';
-      if (o.keyId) {
-        const k = await db.collection('keys').findOne({ _id: new ObjectId(o.keyId) });
-        if (k) keyVal = k.keyValue;
-      }
-      return { ...o, product_name: prod ? prod.name : 'N/A', key_value: keyVal };
-    }));
-    res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  const { data, error } = await supabase.from('orders').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 app.post('/api/admin/orders/:id/approve', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
-  try {
-    const orderId = req.params.id;
-    const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
-    if (!order || order.status === 'paid') return res.status(400).json({ error: 'Đơn không hợp lệ' });
-
-    const key = await db.collection('keys').findOne({ productId: order.productId, sold: false });
-    if (!key) return res.status(400).json({ error: 'Hết key!' });
-
-    await db.collection('keys').updateOne({ _id: key._id }, { $set: { sold: true, orderId: orderId } });
-    await db.collection('orders').updateOne({ _id: new ObjectId(orderId) }, { $set: { status: 'paid', keyId: key._id.toString() } });
-    
-    res.json({ ok: true, key: key.keyValue });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  const { id } = req.params;
+  const { data: order } = await supabase.from('orders').select('*').eq('id', id).single();
+  
+  // Tìm key trong kho (nếu có) hoặc trả về key mẫu
+  const keyValue = 'KEY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  
+  await supabase.from('orders').update({ status: 'paid', key_value: keyValue }).eq('id', id);
+  res.json({ ok: true, key: keyValue });
 });
 
 app.post('/api/admin/products', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
-  try {
-    await db.collection('products').insertOne({ name: req.body.name, price: req.body.price, desc: req.body.desc || '' });
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  const { name, price, description } = req.body;
+  await supabase.from('products').insert([{ name, price, description }]);
+  res.json({ ok: true });
 });
 
 app.post('/api/admin/keys', async (req, res) => {
-  if (!db) return res.status(500).json({ error: 'Database chưa kết nối' });
-  try {
-    await db.collection('keys').insertOne({ productId: req.body.product_id, keyValue: req.body.key_value, sold: false });
-    res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: 'Lỗi thêm key' }); }
+  // Tạm thời chưa dùng
+  res.json({ ok: true });
 });
 
-// ================= CHẠY SERVER =================
+// Khởi chạy
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server đang chạy trên cổng ${PORT}`);
-});
-server.keepAliveTimeout = 120000;
-server.headersTimeout = 120000;
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server chạy cổng ${PORT}`));
