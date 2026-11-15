@@ -12,7 +12,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ================= API KHÁCH HÀNG =================
 
-// Lấy danh sách sản phẩm
 app.get('/api/products', async (req, res) => {
   try {
     const { data, error } = await supabase.from('products').select('*');
@@ -21,13 +20,12 @@ app.get('/api/products', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy số dư ví
 app.get('/api/get-balance/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
     let { data, error } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
     if (error && error.code === 'PGRST116') {
-      await supabase.from('users').insert([{ device_id: deviceId, balance: 0, is_vip: false }]);
+      await supabase.from('users').insert([{ device_id: deviceId, balance: 0 }]);
       return res.json({ balance: 0 });
     }
     if (error) throw error;
@@ -35,7 +33,6 @@ app.get('/api/get-balance/:deviceId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Gửi yêu cầu nạp thẻ
 app.post('/api/nap-the', async (req, res) => {
   try {
     const { deviceId, amount, type, serial, pin } = req.body;
@@ -47,7 +44,6 @@ app.post('/api/nap-the', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Mua bằng QR
 app.post('/api/buy-qr/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
@@ -58,7 +54,6 @@ app.post('/api/buy-qr/:productId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lịch sử mua hàng
 app.get('/api/my-history/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -69,64 +64,8 @@ app.get('/api/my-history/:deviceId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Kiểm tra trạng thái VIP
-app.get('/api/check-vip/:deviceId', async (req, res) => {
-  try {
-    const { deviceId } = req.params;
-    const { data, error } = await supabase.from('users').select('is_vip').eq('device_id', deviceId).single();
-    if (error && error.code === 'PGRST116') {
-      await supabase.from('users').insert([{ device_id: deviceId, balance: 0, is_vip: false }]);
-      return res.json({ is_vip: false });
-    }
-    if (error) throw error;
-    res.json({ is_vip: data.is_vip });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// ================= API CHAT (TIN NHẮN) =================
-
-// Gửi tin nhắn từ khách
-app.post('/api/chat/send', async (req, res) => {
-  try {
-    const { deviceId, message } = req.body;
-    const { error } = await supabase.from('messages').insert([{ device_id: deviceId, message, sender: 'user' }]);
-    if (error) throw error;
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Lấy tin nhắn (dành cho khách và admin)
-app.get('/api/chat/:deviceId', async (req, res) => {
-  try {
-    const { deviceId } = req.params;
-    const { data, error } = await supabase.from('messages').select('*').eq('device_id', deviceId).order('created_at', { ascending: true });
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Admin trả lời tin nhắn
-app.post('/api/chat/reply', async (req, res) => {
-  try {
-    const { deviceId, message } = req.body;
-    const { error } = await supabase.from('messages').insert([{ device_id: deviceId, message, sender: 'admin' }]);
-    if (error) throw error;
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Admin lấy tất cả cuộc hội thoại
-app.get('/api/admin/chats', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 // ================= API ADMIN =================
 
-// Lấy danh sách đơn hàng
 app.get('/api/admin/orders', async (req, res) => {
   try {
     const { data, error } = await supabase.from('orders').select('*').order('id', { ascending: false });
@@ -135,44 +74,19 @@ app.get('/api/admin/orders', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Duyệt đơn hàng (Giao Key)
 app.post('/api/admin/orders/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
     const { data: order } = await supabase.from('orders').select('product_id').eq('id', id).single();
     let { data: keys } = await supabase.from('keys').select('*').eq('product_id', order.product_id).eq('sold', false).limit(1);
-    let keyValue = '';
-    if (keys && keys.length > 0) {
-      keyValue = keys[0].key_value;
-      await supabase.from('keys').update({ sold: true }).eq('id', keys[0].id);
-    } else {
-      keyValue = 'KEY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    }
+    let keyValue = keys && keys.length > 0 ? keys[0].key_value : 'KEY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    
+    if (keys && keys.length > 0) await supabase.from('keys').update({ sold: true }).eq('id', keys[0].id);
     await supabase.from('orders').update({ status: 'paid', key_value: keyValue }).eq('id', id);
     res.json({ ok: true, key: keyValue });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy danh sách thiết bị chờ duyệt VIP
-app.get('/api/admin/pending-users', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('users').select('*').eq('is_vip', false).order('id', { ascending: false });
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Cấp quyền VIP
-app.post('/api/admin/users/:deviceId/approve', async (req, res) => {
-  try {
-    const { deviceId } = req.params;
-    const { error } = await supabase.from('users').update({ is_vip: true }).eq('device_id', deviceId);
-    if (error) throw error;
-    res.json({ ok: true, message: 'Đã cấp quyền VIP!' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Lấy danh sách thẻ chờ duyệt
 app.get('/api/admin/cards', async (req, res) => {
   try {
     const { data, error } = await supabase.from('cards').select('*').eq('status', 'pending').order('id', { ascending: false });
@@ -181,51 +95,37 @@ app.get('/api/admin/cards', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Duyệt thẻ (Cộng tiền)
 app.post('/api/admin/cards/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    const { data: card, error: cardError } = await supabase.from('cards').select('*').eq('id', id).single();
-    if (cardError || !card) return res.status(404).json({ error: 'Không tìm thấy thẻ' });
-    if (card.status === 'approved') return res.status(400).json({ error: 'Thẻ này đã được duyệt rồi!' });
+    const { data: card } = await supabase.from('cards').select('*').eq('id', id).single();
+    if (!card || card.status === 'approved') return res.status(400).json({ error: 'Thẻ không hợp lệ' });
 
     const { data: user } = await supabase.from('users').select('balance').eq('device_id', card.device_id).single();
-    const currentBalance = user ? Number(user.balance) : 0;
-    const newBalance = currentBalance + Number(card.amount);
+    const newBalance = (user ? Number(user.balance) : 0) + Number(card.amount);
     
-    if (user) {
-      await supabase.from('users').update({ balance: newBalance }).eq('device_id', card.device_id);
-    } else {
-      await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance, is_vip: false }]);
-    }
+    if (user) await supabase.from('users').update({ balance: newBalance }).eq('device_id', card.device_id);
+    else await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance }]);
+    
     await supabase.from('cards').update({ status: 'approved' }).eq('id', id);
-    res.json({ ok: true, message: 'Đã duyệt thẻ và cộng tiền!' });
+    res.json({ ok: true, message: 'Đã duyệt thẻ!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// API Admin: Cộng tiền thủ công cho thiết bị
+// API Cộng tiền thủ công
 app.post('/api/admin/add-balance', async (req, res) => {
   try {
     const { deviceId, amount } = req.body;
-    if (!deviceId || !amount) return res.status(400).json({ error: 'Thiếu thông tin' });
-    
     const { data: user } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+    const newBalance = (user ? Number(user.balance) : 0) + Number(amount);
     
-    const currentBalance = user ? Number(user.balance) : 0;
-    const newBalance = currentBalance + Number(amount);
+    if (user) await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
+    else await supabase.from('users').insert([{ device_id: deviceId, balance: newBalance }]);
     
-    if (user) {
-      await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
-    } else {
-      await supabase.from('users').insert([{ device_id: deviceId, balance: newBalance, is_vip: false }]);
-    }
-    res.json({ ok: true, message: 'Đã cộng tiền thành công!' });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+    res.json({ ok: true, message: 'Đã cộng tiền!' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Thêm sản phẩm
 app.post('/api/admin/products', async (req, res) => {
   try {
     const { name, price, description } = req.body;
@@ -234,34 +134,27 @@ app.post('/api/admin/products', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Thêm Key vào kho
 app.post('/api/admin/keys', async (req, res) => {
   try {
     const { product_id, key_value, quantity } = req.body;
     const qty = Number(quantity) || 1;
     const keysToInsert = [];
     for (let i = 0; i < qty; i++) {
-      const finalKey = qty > 1 ? `${key_value}-${i + 1}` : key_value;
-      keysToInsert.push({ product_id: product_id, key_value: finalKey, sold: false });
+      keysToInsert.push({ product_id: product_id, key_value: qty > 1 ? `${key_value}-${i + 1}` : key_value, sold: false });
     }
     const { error } = await supabase.from('keys').insert(keysToInsert);
     if (error) throw error;
-    res.json({ ok: true, message: `Đã thêm thành công ${qty} key!` });
+    res.json({ ok: true, message: `Đã thêm ${qty} key!` });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy danh sách key trong kho
 app.get('/api/admin/keys/:productId', async (req, res) => {
   try {
-    const { productId } = req.params;
-    const { data, error } = await supabase.from('keys').select('*').eq('product_id', productId).order('id', { ascending: false });
+    const { data, error } = await supabase.from('keys').select('*').eq('product_id', req.params.productId).order('id', { ascending: false });
     if (error) throw error;
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Khởi chạy Server
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server chạy cổng ${PORT}`));
-server.keepAliveTimeout = 120000;
-server.headersTimeout = 120000;
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server chạy cổng ${PORT}`));
