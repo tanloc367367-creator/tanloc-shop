@@ -27,6 +27,9 @@
   .wallet-box h3 { color: #00f2fe; margin-bottom: 10px; }
   .wallet-id { font-family: monospace; font-size: 1.2rem; color: #ffd700; margin: 10px 0; background: #000; padding: 5px 10px; border-radius: 5px; display: inline-block; }
   .wallet-balance { font-size: 2rem; font-weight: 900; color: #fff; margin: 10px 0; }
+  .input-group { margin-top: 15px; text-align: left; }
+  .input-group label { font-size: 0.85rem; color: #aaa; margin-bottom: 5px; display: block; }
+  .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; margin-bottom: 10px; }
   .admin-container { max-width: 1000px; margin: 20px auto; padding: 20px; }
   .tabs { display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #333; overflow-x:auto; }
   .tab { padding:12px 20px; cursor:pointer; color:#aaa; border:none; background:none; white-space:nowrap; }
@@ -48,38 +51,45 @@
   .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00f2fe; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; display:none; z-index:2000; }
   .toast.show { display:block; }
 
-  /* Màn hình chặn VIP */
-  #vip-lock-screen {
-    position: fixed; inset: 0; background: #0f0c29; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;
-  }
-  #vip-lock-screen h1 { color: #f5576c; margin-bottom: 20px; font-size: 2rem; }
-  #vip-lock-screen p { color: #ccc; margin-bottom: 15px; font-size: 1rem; line-height: 1.5; }
-  .device-code-box { background: #000; color: #00f2fe; font-family: monospace; font-size: 1.5rem; padding: 10px 20px; border-radius: 10px; border: 1px solid #00f2fe; margin: 15px 0; letter-spacing: 2px;}
+  /* Màn hình chặn VIP + Chat */
+  #vip-lock-screen { position: fixed; inset: 0; background: #0f0c29; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+  #vip-lock-screen h1 { color: #f5576c; margin-bottom: 15px; font-size: 1.8rem; }
+  #vip-lock-screen p { color: #ccc; margin-bottom: 10px; font-size: 0.95rem; line-height: 1.4; }
+  .device-code-box { background: #000; color: #00f2fe; font-family: monospace; font-size: 1.5rem; padding: 10px 20px; border-radius: 10px; border: 1px solid #00f2fe; margin: 10px 0; letter-spacing: 2px;}
+  
+  /* Khung Chat */
+  .chat-container { width: 100%; max-width: 500px; background: #1a1a2e; border-radius: 15px; border: 1px solid #333; margin-top: 15px; overflow: hidden; display: flex; flex-direction: column; height: 250px; }
+  .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; text-align: left; }
+  .chat-bubble.user { align-self: flex-end; background: #4facfe; color: #000; border-bottom-right-radius: 2px; }
+  .chat-bubble.admin { align-self: flex-start; background: #333; color: #fff; border-bottom-left-radius: 2px; }
+  .chat-input-area { display: flex; padding: 10px; background: #111; border-top: 1px solid #333; }
+  .chat-input-area input { flex: 1; padding: 10px; border-radius: 20px; border: none; background: #222; color: #fff; outline: none; margin-right: 10px; }
+  .chat-input-area button { width: 40px; height: 40px; border-radius: 50%; border: none; background: #00f2fe; color: #000; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<!-- MÀN HÌNH CHẶN (Bắt buộc phải cấp quyền mới qua được) -->
+<!-- MÀN HÌNH CHẶN (Có Chat trực tiếp) -->
 <div id="vip-lock-screen" class="hidden">
   <h1>🔒 YÊU CẦU CẤP QUYỀN</h1>
-  <p>Chào mừng đến với TÂN LỘC SHOP.</p>
-  <p>Vui lòng gửi <b>Mã Thiết Bị</b> dưới đây cho Admin để được cấp quyền truy cập.</p>
-  
+  <p>Gửi <b>Mã Thiết Bị</b> cho Admin để được duyệt.</p>
   <div class="device-code-box" id="lock-device-id">Đang tải...</div>
+  <button class="btn" style="max-width: 300px; background:#00f2fe;" onclick="copyDeviceCode()">📋 Sao chép mã</button>
   
-  <button class="btn" style="max-width: 350px; margin-bottom: 10px; background:#00f2fe;" onclick="copyDeviceCode()">📋 Sao chép mã thiết bị</button>
-  
-  <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 5px;">
-    <!-- SỬA LINK ZALO VÀ TELEGRAM CỦA BẠN Ở ĐÂY -->
-    <button class="btn" style="width: 160px; background: #0068FF; color: #fff;" onclick="contactAdmin('zalo')">💬 Nhắn Zalo</button>
-    <button class="btn" style="width: 160px; background: #0088cc; color: #fff;" onclick="contactAdmin('telegram')">✈️ Nhắn Telegram</button>
+  <!-- KHUNG CHAT TRỰC TIẾP -->
+  <div class="chat-container">
+    <div class="chat-messages" id="lock-chat-messages">
+      <p style="text-align:center; color:#888; font-size:0.8rem;">Nhắn tin cho Admin tại đây</p>
+    </div>
+    <div class="chat-input-area">
+      <input id="lock-chat-input" placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendLockChat()">
+      <button onclick="sendLockChat()">➤</button>
+    </div>
   </div>
-  
-  <p style="margin-top: 20px; font-size: 0.85rem; color: #888;">Sau khi Admin duyệt, bạn hãy tải lại trang (F5) để vào web.</p>
 </div>
 
-<!-- TRANG KHÁCH HÀNG (Bị ẩn đi nếu chưa VIP) -->
+<!-- TRANG KHÁCH HÀNG -->
 <div id="page-home" class="hidden">
   <div class="topbar">
     <div class="logo">🔑 TÂN LỘC</div>
@@ -89,96 +99,110 @@
 
   <div class="wallet-box">
     <h3>💳 VÍ ĐIỆN TỬ CỦA BẠN</h3>
-    <p style="font-size: 0.9rem; color: #aaa;">Mã Ví (Lưu lại để không mất tiền):</p>
+    <p style="font-size: 0.9rem; color: #aaa;">Mã Ví (Lưu lại):</p>
     <div class="wallet-id" id="my-vip-code">Đang tải...</div>
     <p style="font-size: 0.9rem; color: #aaa;">Số dư hiện tại:</p>
     <div class="wallet-balance" id="my-balance">0 đ</div>
+    
+    <hr style="border-color: #333; margin: 20px 0;">
+    <h3 style="color: #ffd700;">💳 NẠP THẺ CÀO (CHỜ DUYỆT)</h3>
+    <div class="input-group">
+      <select id="card-type"><option value="VIETTEL">Viettel</option><option value="MOBIFONE">Mobifone</option><option value="VINAPHONE">Vinaphone</option></select>
+      <input id="card-amount" type="number" placeholder="Mệnh giá (VD: 10000)">
+      <input id="card-serial" placeholder="Số Seri">
+      <input id="card-pin" placeholder="Mã Thẻ">
+      <button onclick="napThe()" class="btn">Gửi Yêu Cầu Nạp</button>
+    </div>
   </div>
-
   <div class="grid" id="products-list"></div>
 </div>
 
-<!-- TRANG ADMIN (BÍ MẬT) -->
+<!-- TRANG ADMIN -->
 <div id="page-admin" class="hidden admin-container">
   <div style="display:flex;justify-content:space-between;margin-bottom:20px; align-items:center;">
     <h1 style="color:#00f2fe;">⚙️ Admin Panel</h1>
-    <a href="/" class="btn btn-sm" style="background:#f5576c;color:#fff;text-decoration:none;padding:10px 20px;">Thoát Admin</a>
+    <a href="/" class="btn btn-sm" style="background:#f5576c;color:#fff;text-decoration:none;padding:10px 20px;">Thoát</a>
   </div>
   
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
     <button class="tab" onclick="showTab('vip',this)">🔒 Cấp Quyền</button>
     <button class="tab" onclick="showTab('cards',this)">💳 Duyệt Thẻ</button>
+    <button class="tab" onclick="showTab('chats',this)">💬 Tin Nhắn</button>
     <button class="tab" onclick="showTab('keys',this)">🔑 Kho Key</button>
     <button class="tab" onclick="showTab('products',this)">📦 Sản phẩm</button>
   </div>
 
-  <div class="panel active" id="orders">
-    <table><thead><tr><th>Mã ĐH</th><th>Khách (Ví)</th><th>SP</th><th>Key đã giao</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table>
-  </div>
+  <div class="panel active" id="orders"><table><thead><tr><th>Mã ĐH</th><th>Khách</th><th>SP</th><th>Key</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table></div>
 
-  <!-- TAB CẤP QUYỀN VIP -->
   <div class="panel" id="vip">
     <h2 style="margin-bottom:15px; font-size:1.2rem;">Cấp Quyền Truy Cập</h2>
     <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
-      <p style="margin-bottom:10px; color:#ccc;">Nhập mã thiết bị của khách (VD: VIP-NYOEVK):</p>
       <input id="vip-input" placeholder="Nhập mã thiết bị..." style="width:100%; max-width:400px; padding:15px; border-radius:8px; border:2px solid #4facfe; background:#222; color:#fff; font-size:1.2rem; text-align:center; margin-bottom:15px; font-family:monospace; text-transform:uppercase;">
-      <br>
-      <button onclick="capQuyenVIP()" class="btn" style="max-width:400px; font-size:1.3rem; padding:15px; font-weight:900; background:linear-gradient(90deg,#00f2fe,#4facfe);">🔒 CẤP QUYỀN NGAY</button>
+      <br><button onclick="capQuyenVIP()" class="btn" style="max-width:400px; font-size:1.3rem; padding:15px; font-weight:900; background:linear-gradient(90deg,#00f2fe,#4facfe);">🔒 CẤP QUYỀN</button>
     </div>
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Hoặc chọn từ danh sách:</h2>
-    <table><thead><tr><th>Mã Thiết Bị (VIP)</th><th>Số dư</th><th>Hành động</th></tr></thead><tbody id="admin-vip-body"></tbody></table>
   </div>
 
   <div class="panel" id="cards">
-    <table><thead><tr><th>Khách (Ví)</th><th>Loại thẻ</th><th>Mệnh giá</th><th>Seri</th><th>Mã thẻ</th><th>Hành động</th></tr></thead><tbody id="admin-card-body"></tbody></table>
+    <h2 style="margin-bottom:15px; font-size:1.2rem; color:#ffd700;">Cộng Tiền Thủ Công</h2>
+    <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:10px; margin-bottom:30px; display:flex; gap:15px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="flex:1; min-width:200px;">
+        <label style="display:block; color:#ccc; margin-bottom:5px; font-size:0.9rem;">Mã thiết bị (VD: VIP-XXXXXX)</label>
+        <input id="manual-topup-device" placeholder="Nhập mã thiết bị..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #4facfe; background:#222; color:#fff; font-size:1rem; font-family:monospace; text-transform:uppercase;">
+      </div>
+      <div style="flex:1; min-width:150px;">
+        <label style="display:block; color:#ccc; margin-bottom:5px; font-size:0.9rem;">Số tiền (VNĐ)</label>
+        <input id="manual-topup-amount" type="number" placeholder="Nhập số tiền..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #4facfe; background:#222; color:#fff; font-size:1rem;">
+      </div>
+      <div>
+        <button onclick="manualTopUp()" class="btn" style="padding:12px 25px; font-size:1.1rem; font-weight:900; background:linear-gradient(90deg,#00f2fe,#4facfe);">➕ TIỀN</button>
+      </div>
+    </div>
+    <h2 style="margin-bottom:15px; font-size:1.2rem; color:#4facfe;">Danh sách thẻ chờ duyệt</h2>
+    <table><thead><tr><th>Khách</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Hành động</th></tr></thead><tbody id="admin-card-body"></tbody></table>
+  </div>
+
+  <!-- TAB CHAT CỦA ADMIN -->
+  <div class="panel" id="chats">
+    <h2 style="margin-bottom:15px; font-size:1.2rem;">Hộp thư hỗ trợ</h2>
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div style="flex: 1; min-width: 200px; background:#1a1a2e; border-radius:10px; padding:10px; max-height:400px; overflow-y:auto;">
+        <h4 style="color:#4facfe; margin-bottom:10px;">Danh sách khách</h4>
+        <div id="admin-chat-list"></div>
+      </div>
+      <div style="flex: 2; min-width: 300px;">
+        <div class="chat-container" style="height: 400px; max-width: 100%;">
+          <div class="chat-messages" id="admin-chat-messages">
+            <p style="text-align:center; color:#888;">Chọn một khách hàng để xem tin nhắn</p>
+          </div>
+          <div class="chat-input-area">
+            <input id="admin-chat-input" placeholder="Trả lời khách..." onkeypress="if(event.key==='Enter') sendAdminChat()">
+            <button onclick="sendAdminChat()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="panel" id="keys">
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm Key vào kho</h2>
+    <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm Key</h2>
     <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
       <select id="key-product" class="admin-input" style="max-width:200px;"></select>
-      <input id="key-value" placeholder="Mã Key (VD: KEY-ABC)" class="admin-input" style="max-width:200px;">
-      <input id="key-quantity" type="number" placeholder="Số lượng" class="admin-input" style="max-width:100px;" value="1">
-      <button onclick="addKey()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm Key</button>
+      <input id="key-value" placeholder="Mã Key" class="admin-input" style="max-width:200px;">
+      <input id="key-quantity" type="number" placeholder="SL" class="admin-input" style="max-width:80px;" value="1">
+      <button onclick="addKey()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm</button>
     </div>
-    <table><thead><tr><th>Sản phẩm</th><th>Mã Key</th><th>Trạng thái</th></tr></thead><tbody id="admin-key-body"></tbody></table>
+    <table><thead><tr><th>SP</th><th>Mã Key</th><th>Trạng thái</th></tr></thead><tbody id="admin-key-body"></tbody></table>
   </div>
   
   <div class="panel" id="products">
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm sản phẩm mới</h2>
+    <h2 style="margin-bottom:15px; font-size:1.2rem;">Thêm Sản Phẩm</h2>
     <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
-      <input id="p-name" placeholder="Tên sản phẩm (VD: Gói VIP)" class="admin-input" style="max-width:200px;">
-      <input id="p-price" type="number" placeholder="Giá (đ)" class="admin-input" style="max-width:120px;">
-      <input id="p-desc" placeholder="Mô tả" class="admin-input" style="max-width:250px;">
-      <button onclick="addProduct()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm SP</button>
+      <input id="p-name" placeholder="Tên SP" class="admin-input" style="max-width:200px;">
+      <input id="p-price" type="number" placeholder="Giá" class="admin-input" style="max-width:120px;">
+      <button onclick="addProduct()" class="btn btn-sm" style="background:#00f2fe;">➕ Thêm</button>
     </div>
-    <table><thead><tr><th>Tên SP</th><th>Giá</th><th>Mô tả</th></tr></thead><tbody id="admin-prod-body"></tbody></table>
-  </div>
-</div>
-
-<div class="modal" id="pay-modal">
-  <div class="modal-box">
-    <h3 style="color:#4facfe; margin-bottom:15px;">💳 Thanh toán</h3>
-    <p id="pay-product" style="font-weight:bold; margin-bottom:10px;"></p>
-    <p id="pay-amount" style="font-size:2rem; color:#00f2fe; font-weight:900; margin-bottom:15px;"></p>
-    <div class="qr-wrap"><img id="pay-qr"></div>
-    <div class="bank-info">
-      <p>🏦 <b>Ngân hàng:</b> MB Bank <button class="copy-btn" onclick="copyText('MB Bank')">Copy</button></p>
-      <p>💳 <b>STK:</b> <span id="txt-stk">0123456789</span> <button class="copy-btn" onclick="copyText('0123456789')">Copy</button></p>
-      <p>👤 <b>Chủ TK:</b> NGUYEN VAN A</p>
-      <p>📝 <b>Nội dung CK:</b> <span class="memo" id="pay-memo"></span> <button class="copy-btn" onclick="copyMemo()">Copy</button></p>
-    </div>
-    <p style="font-size:0.85rem; color:#ffd700; margin-top:15px;">👉 Chuyển khoản đúng nội dung, sau đó nhắn Zalo/Telegram để nhận Key!</p>
-    <button class="btn" onclick="document.getElementById('pay-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
-  </div>
-</div>
-
-<div class="modal" id="history-modal">
-  <div class="modal-box" style="max-width: 600px; text-align: left;">
-    <h3 style="color:#4facfe; margin-bottom:15px; text-align: center;">🧾 Lịch Sử Mua Key</h3>
-    <div id="history-list" style="max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
-    <button class="btn" onclick="document.getElementById('history-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
+    <table><thead><tr><th>Tên SP</th><th>Giá</th></tr></thead><tbody id="admin-prod-body"></tbody></table>
   </div>
 </div>
 
@@ -187,16 +211,13 @@
 <script>
 const isAdmin = window.location.hash === '#admintanlocdepzai';
 const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A' };
+let currentAdminChatDevice = '';
 
 function getDeviceId() {
   let id = localStorage.getItem('vip_code');
-  if (!id) {
-    id = 'VIP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    localStorage.setItem('vip_code', id);
-  }
+  if (!id) { id = 'VIP-' + Math.random().toString(36).substring(2, 8).toUpperCase(); localStorage.setItem('vip_code', id); }
   return id;
 }
-
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 
 async function init() {
@@ -204,11 +225,7 @@ async function init() {
     document.getElementById('vip-lock-screen').classList.add('hidden');
     document.getElementById('page-home').classList.add('hidden');
     document.getElementById('page-admin').classList.remove('hidden');
-    loadAdminOrders();
-    loadAdminCards();
-    loadAdminProducts();
-    loadAdminVip();
-    loadKeySelect();
+    loadAdminOrders(); loadAdminCards(); loadAdminProducts(); loadKeySelect(); loadAdminChatList();
     return;
   }
 
@@ -216,16 +233,15 @@ async function init() {
   try {
     const res = await fetch('/api/check-vip/' + deviceId);
     const data = await res.json();
-    
     if (data.is_vip) {
       document.getElementById('vip-lock-screen').classList.add('hidden');
       document.getElementById('page-home').classList.remove('hidden');
       document.getElementById('my-vip-code').textContent = deviceId;
-      loadBalance();
-      loadProducts();
+      loadBalance(); loadProducts();
     } else {
       document.getElementById('vip-lock-screen').classList.remove('hidden');
       document.getElementById('lock-device-id').textContent = deviceId;
+      loadLockChat();
     }
   } catch (e) {
     document.getElementById('vip-lock-screen').classList.remove('hidden');
@@ -233,190 +249,167 @@ async function init() {
   }
 }
 
-function copyDeviceCode() {
-  const code = document.getElementById('lock-device-id').textContent;
-  navigator.clipboard.writeText(code).then(() => { toast('Đã sao chép mã thiết bị!'); });
+function copyDeviceCode() { navigator.clipboard.writeText(document.getElementById('lock-device-id').textContent).then(() => toast('Đã sao chép!')); }
+
+async function loadLockChat() {
+  const deviceId = getDeviceId();
+  const res = await fetch('/api/chat/' + deviceId);
+  const msgs = await res.json();
+  const chatDiv = document.getElementById('lock-chat-messages');
+  if (msgs.length === 0) { chatDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:0.8rem;">Nhắn tin cho Admin tại đây</p>'; return; }
+  chatDiv.innerHTML = msgs.map(m => `<div class="chat-bubble ${m.sender}">${m.message}</div>`).join('');
+  chatDiv.scrollTop = chatDiv.scrollHeight;
 }
 
-function contactAdmin(type) {
-  const code = document.getElementById('lock-device-id').textContent;
-  const message = encodeURIComponent(`Chào Admin, tôi muốn được cấp quyền truy cập web. Mã thiết bị của tôi là: ${code}`);
-  if (type === 'zalo') {
-    window.open(`https://zalo.me/0123456789?text=${message}`, '_blank');
-  } else if (type === 'telegram') {
-    window.open(`https://t.me/username_cua_ban?text=${message}`, '_blank');
-  }
+async function sendLockChat() {
+  const input = document.getElementById('lock-chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const deviceId = getDeviceId();
+  input.value = '';
+  await fetch('/api/chat/send', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId, message: msg }) });
+  loadLockChat();
+}
+
+async function loadAdminChatList() {
+  const res = await fetch('/api/admin/chats');
+  const msgs = await res.json();
+  const devices = [...new Set(msgs.map(m => m.device_id))];
+  document.getElementById('admin-chat-list').innerHTML = devices.map(d => `
+    <div onclick="openAdminChat('${d}')" style="padding:10px; border-bottom:1px solid #333; cursor:pointer; color:#fff;">
+      <b style="color:#00f2fe;">${d}</b>
+    </div>
+  `).join('') || '<p style="color:#888;">Chưa có tin nhắn nào</p>';
+}
+
+async function openAdminChat(deviceId) {
+  currentAdminChatDevice = deviceId;
+  const res = await fetch('/api/chat/' + deviceId);
+  const msgs = await res.json();
+  const chatDiv = document.getElementById('admin-chat-messages');
+  chatDiv.innerHTML = msgs.map(m => `<div class="chat-bubble ${m.sender}">${m.message}</div>`).join('');
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+}
+
+async function sendAdminChat() {
+  if (!currentAdminChatDevice) return toast('Chọn một khách để trả lời!');
+  const input = document.getElementById('admin-chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  await fetch('/api/chat/reply', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId: currentAdminChatDevice, message: msg }) });
+  openAdminChat(currentAdminChatDevice);
+  loadAdminChatList();
 }
 
 async function loadBalance() {
   const id = getDeviceId();
-  try {
-    const res = await fetch('/api/get-balance/' + id);
-    const data = await res.json();
-    document.getElementById('my-balance').textContent = data.balance.toLocaleString('vi-VN') + ' đ';
-  } catch (e) { console.log('Lỗi tải số dư'); }
+  const res = await fetch('/api/get-balance/' + id);
+  const data = await res.json();
+  document.getElementById('my-balance').textContent = data.balance.toLocaleString('vi-VN') + ' đ';
+}
+async function napThe() {
+  const amount = document.getElementById('card-amount').value;
+  const serial = document.getElementById('card-serial').value;
+  const pin = document.getElementById('card-pin').value;
+  const type = document.getElementById('card-type').value;
+  if (!amount || !serial || !pin) return alert('Nhập đủ thông tin thẻ!');
+  const id = getDeviceId();
+  await fetch('/api/nap-the', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId: id, amount, type, serial, pin }) });
+  alert('Đã gửi yêu cầu nạp thẻ!');
+      document.getElementById('card-amount').value = ''; document.getElementById('card-serial').value = ''; document.getElementById('card-pin').value = '';
 }
 
 async function loadProducts() {
-  try {
-    const r = await fetch('/api/products'); const list = await r.json();
-    document.getElementById('products-list').innerHTML = list.map(p => `
-      <div class="card">
-        <h3>${p.name}</h3><p class="desc">${p.description || ''}</p>
-        <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
-                <button class="btn" onclick="buyQR('${p.id}')">📱 Mua bằng QR</button>
-      </div>`).join('');
-  } catch (e) { toast('Lỗi tải sản phẩm!'); }
+  const r = await fetch('/api/products'); const list = await r.json();
+  document.getElementById('products-list').innerHTML = list.map(p => `
+    <div class="card"><h3>${p.name}</h3><p class="desc">${p.description || ''}</p><div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
+    <button class="btn" onclick="buyQR('${p.id}')">📱 Mua bằng QR</button></div>`).join('');
 }
 
 async function buyQR(id) {
-  try {
-    const res = await fetch('/api/buy-qr/' + id, { method: 'POST' });
-    const d = await res.json();
-    if (!res.ok) return alert(d.error);
-    document.getElementById('pay-product').textContent = d.productName;
-    document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN') + 'đ';
-    document.getElementById('pay-memo').textContent = d.payment_code;
-    document.getElementById('txt-stk').textContent = BANK.account;
-    document.getElementById('pay-qr').src = `https://img.vietqr.io/image/${BANK.bankId}-${BANK.account}-compact2.png?amount=${d.amount}&addInfo=${d.payment_code}&accountName=${encodeURIComponent(BANK.name)}`;
-    document.getElementById('pay-modal').classList.add('active');
-  } catch (e) { alert('Lỗi kết nối'); }
-}
-
-async function openHistory() {
-  const deviceId = getDeviceId();
-  document.getElementById('history-modal').classList.add('active');
-  const listDiv = document.getElementById('history-list');
-  listDiv.innerHTML = '<p style="text-align:center;">Đang tải lịch sử...</p>';
-  try {
-    const res = await fetch('/api/my-history/' + deviceId);
-    const history = await res.json();
-    if (!history || history.length === 0) {
-      listDiv.innerHTML = '<p style="text-align:center; color:#aaa;">Bạn chưa có đơn hàng nào.</p>';
-      return;
-    }
-    listDiv.innerHTML = history.map(order => {
-      const prodName = order.products ? order.products.name : 'Sản phẩm';
-      if (order.status === 'paid') {
-        return `<div class="key-item paid"><div class="key-title">✅ ${prodName}</div><div class="key-code">${order.key_value}</div></div>`;
-      } else {
-        return `<div class="key-item"><div class="key-title">⏳ ${prodName}</div><div style="color:#aaa; font-size:0.85rem;">Đang chờ Admin duyệt.</div></div>`;
-      }
-    }).join('');
-  } catch (e) { listDiv.innerHTML = '<p style="text-align:center; color:red;">Lỗi tải lịch sử!</p>'; }
+  const res = await fetch('/api/buy-qr/' + id, { method: 'POST' }); const d = await res.json();
+  if (!res.ok) return alert(d.error);
+  alert('Tạo đơn hàng thành công! Mã đơn: ' + d.payment_code);
 }
 
 function showTab(id, btn) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active'); btn.classList.add('active');
-  if(id==='orders') loadAdminOrders(); 
-  if(id==='cards') loadAdminCards();
-  if(id==='vip') loadAdminVip();
-  if(id==='products') loadAdminProducts(); 
-  if(id==='keys') loadAdminKeys();
+  if(id==='orders') loadAdminOrders(); if(id==='cards') loadAdminCards(); if(id==='vip') loadAdminVip(); 
+  if(id==='chats') loadAdminChatList(); if(id==='products') loadAdminProducts(); if(id==='keys') loadAdminKeys();
 }
 
 async function loadAdminOrders() {
-  try {
-    const r = await fetch('/api/admin/orders'); const list = await r.json();
-    document.getElementById('admin-order-body').innerHTML = list.map(o=>`
-      <tr>
-        <td><b style="color:#ffd700">${o.payment_code || 'Mua Ví'}</b></td>
-        <td style="font-size:0.8rem;">${o.device_id || '-'}</td>
-        <td>${o.product_id}</td>
-        <td style="color:#00f2fe; font-family:monospace;">${o.key_value || '-'}</td>
-        <td>${o.status}</td>
-        <td>${o.status !== 'paid' ? `<button onclick="approve('${o.id}')" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button>` : ''}</td>
-      </tr>`).join('');
-  } catch (e) { toast('Lỗi tải đơn hàng'); }
+  const r = await fetch('/api/admin/orders'); const list = await r.json();
+  document.getElementById('admin-order-body').innerHTML = list.map(o=>`
+    <tr><td><b style="color:#ffd700">${o.payment_code || 'Mua Ví'}</b></td><td>${o.device_id || '-'}</td><td>${o.product_id}</td>
+    <td style="color:#00f2fe">${o.key_value || '-'}</td><td>${o.status}</td>
+    <td>${o.status !== 'paid' ? `<button onclick="approve('${o.id}')" class="btn btn-sm">Duyệt</button>` : ''}</td></tr>`).join('');
 }
 
-async function approve(id) { 
-  await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); 
-  loadAdminOrders(); toast('Đã duyệt đơn!'); 
-}
+async function approve(id) { await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); loadAdminOrders(); toast('Đã duyệt!'); }
 
 async function loadAdminCards() {
-  try {
-    const r = await fetch('/api/admin/cards'); const list = await r.json();
-    document.getElementById('admin-card-body').innerHTML = list.map(c=>`
-      <tr>
-        <td style="font-size:0.8rem;">${c.device_id}</td>
-        <td>${c.type}</td>
-        <td style="color:#ffd700">${c.amount.toLocaleString('vi-VN')}đ</td>
-        <td>${c.serial}</td>
-        <td>${c.pin}</td>
-        <td><button onclick="approveCard('${c.id}')" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button></td>
-      </tr>`).join('');
-  } catch (e) { toast('Lỗi tải thẻ'); }
+  const r = await fetch('/api/admin/cards'); const list = await r.json();
+  document.getElementById('admin-card-body').innerHTML = list.map(c=>`
+    <tr><td>${c.device_id}</td><td>${c.type}</td><td style="color:#ffd700">${c.amount.toLocaleString('vi-VN')}đ</td>
+    <td>${c.serial}</td><td>${c.pin}</td><td><button onclick="approveCard('${c.id}')" class="btn btn-sm">Duyệt</button></td></tr>`).join('');
 }
 
-async function approveCard(id) {
-  await fetch('/api/admin/cards/' + id + '/approve', { method: 'POST' });
-  toast('Đã duyệt thẻ và cộng tiền!');
-  loadAdminCards();
-}
+async function approveCard(id) { await fetch('/api/admin/cards/'+id+'/approve',{method:'POST'}); loadAdminCards(); toast('Đã duyệt thẻ!'); }
 
 async function loadAdminVip() {
-  try {
-    const r = await fetch('/api/admin/pending-users'); const list = await r.json();
-    document.getElementById('admin-vip-body').innerHTML = list.map(u=>`
-      <tr>
-        <td style="color:#ffd700; font-family:monospace;">${u.device_id}</td>
-        <td>${(u.balance || 0).toLocaleString('vi-VN')}đ</td>
-        <td><button onclick="approveVip('${u.device_id}')" class="btn btn-sm" style="background:#00f2fe;">Cấp Quyền</button></td>
-      </tr>`).join('');
-  } catch (e) { toast('Lỗi tải danh sách VIP'); }
+  const r = await fetch('/api/admin/pending-users'); const list = await r.json();
+  document.getElementById('admin-vip-body').innerHTML = list.map(u=>`
+    <tr><td style="color:#ffd700">${u.device_id}</td><td>${(u.balance||0).toLocaleString('vi-VN')}đ</td>
+    <td><button onclick="approveVip('${u.device_id}')" class="btn btn-sm">Cấp Quyền</button></td></tr>`).join('');
 }
 
 async function capQuyenVIP() {
   const deviceId = document.getElementById('vip-input').value.trim().toUpperCase();
-  if (!deviceId) return toast('Vui lòng nhập mã thiết bị!');
-  
-  if(!confirm('Cấp quyền truy cập web cho thiết bị: ' + deviceId + '?')) return;
-  
-  try {
-    const res = await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
-    if (res.ok) {
-      toast('✅ Đã cấp quyền thành công cho: ' + deviceId);
-      document.getElementById('vip-input').value = '';
-      loadAdminVip(); 
-    } else {
-      toast('❌ Lỗi cấp quyền, kiểm tra lại mã!');
-    }
-  } catch(e) { toast('Lỗi kết nối Server'); }
+  if (!deviceId) return toast('Nhập mã!');
+  if(!confirm('Cấp quyền cho: ' + deviceId + '?')) return;
+  await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
+  toast('Đã cấp quyền!'); document.getElementById('vip-input').value = ''; loadAdminVip();
 }
 
 async function approveVip(deviceId) {
-  if(!confirm('Cấp quyền truy cập web cho thiết bị ' + deviceId + '?')) return;
+  if(!confirm('Cấp quyền cho: ' + deviceId + '?')) return;
   await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
-  loadAdminVip(); toast('Đã cấp quyền VIP!');
+  loadAdminVip(); toast('Đã cấp quyền!');
 }
 
-async function loadKeySelect() {
-  const r = await fetch('/api/products'); const list = await r.json();
-  document.getElementById('key-product').innerHTML = list.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+async function manualTopUp() {
+  const deviceId = document.getElementById('manual-topup-device').value.trim().toUpperCase();
+  const amount = Number(document.getElementById('manual-topup-amount').value);
+  if (!deviceId) return toast('Vui lòng nhập mã thiết bị!');
+  if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!');
+  if (!confirm(`Cộng ${amount.toLocaleString('vi-VN')}đ cho thiết bị ${deviceId}?`)) return;
+  try {
+    const res = await fetch('/api/admin/add-balance', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId, amount }) });
+    const data = await res.json();
+    if (res.ok) {
+      toast('✅ ' + data.message);
+      document.getElementById('manual-topup-device').value = '';
+      document.getElementById('manual-topup-amount').value = '';
+    } else { toast('❌ ' + data.error); }
+  } catch (e) { toast('❌ Lỗi kết nối Server'); }
 }
+
+async function loadKeySelect() { const r = await fetch('/api/products'); const list = await r.json(); document.getElementById('key-product').innerHTML = list.map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
 
 async function loadAdminProducts() {
-  try {
-    const r = await fetch('/api/products'); const list = await r.json();
-    document.getElementById('admin-prod-body').innerHTML = list.map(p=>`
-      <tr><td>${p.name}</td><td>${p.price.toLocaleString('vi-VN')}đ</td><td>${p.description||''}</td></tr>
-    `).join('');
-    loadKeySelect();
-  } catch (e) { toast('Lỗi tải sản phẩm'); }
+  const r = await fetch('/api/products'); const list = await r.json();
+  document.getElementById('admin-prod-body').innerHTML = list.map(p=>`<tr><td>${p.name}</td><td>${p.price.toLocaleString('vi-VN')}đ</td></tr>`).join('');
+  loadKeySelect();
 }
 
 async function addProduct() {
-  const name = document.getElementById('p-name').value;
-  const price = +document.getElementById('p-price').value;
-  const description = document.getElementById('p-desc').value;
+  const name = document.getElementById('p-name').value; const price = +document.getElementById('p-price').value;
   if (!name || !price) return toast('Nhập tên và giá!');
-  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description})});
-  loadAdminProducts(); toast('Đã thêm sản phẩm'); 
-  document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-desc').value='';
+  await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description:''})});
+  loadAdminProducts(); toast('Đã thêm!');
 }
 
 async function addKey() {
@@ -425,10 +418,7 @@ async function addKey() {
   const quantity = document.getElementById('key-quantity').value || 1;
   if (!key_value) return toast('Vui lòng nhập mã Key!');
   try {
-    const res = await fetch('/api/admin/keys', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ product_id, key_value, quantity })
-    });
+    const res = await fetch('/api/admin/keys', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ product_id, key_value, quantity }) });
     const data = await res.json();
     if (data.ok) {
       toast(data.message);
@@ -440,32 +430,12 @@ async function addKey() {
 }
 
 async function loadAdminKeys() {
-  try {
-    const productId = document.getElementById('key-product').value;
-    if(!productId) return;
-    const r = await fetch('/api/admin/keys/' + productId);
-    const list = await r.json();
-    document.getElementById('admin-key-body').innerHTML = list.map(k=>`
-      <tr>
-        <td>${k.product_id}</td>
-        <td style="color:#00f2fe; font-family:monospace;">${k.key_value}</td>
-        <td style="color:${k.sold ? '#f5576c' : '#00f2fe'}">${k.sold ? 'Đã bán' : 'Chưa bán'}</td>
-      </tr>
-    `).join('');
-  } catch (e) { toast('Lỗi tải danh sách key'); }
-}
-
-function copyText(text) { navigator.clipboard.writeText(text).then(() => { toast('Đã sao chép!'); }); }
-function copyMemo() { copyText(currentMemo); }
-
-function startCountdown(duration, display) {
-  let timer = duration, hours, minutes, seconds;
-  setInterval(function () {
-    hours = parseInt(timer / 3600, 10); minutes = parseInt((timer % 3600) / 60, 10); seconds = parseInt(timer % 60, 10);
-    hours = hours < 10 ? "0" + hours : hours; minutes = minutes < 10 ? "0" + minutes : minutes; seconds = seconds < 10 ? "0" + seconds : seconds;
-    display.textContent = hours + ":" + minutes + ":" + seconds;
-    if (--timer < 0) timer = duration;
-  }, 1000);
+  const productId = document.getElementById('key-product').value;
+  if(!productId) return;
+  const r = await fetch('/api/admin/keys/' + productId); const list = await r.json();
+  document.getElementById('admin-key-body').innerHTML = list.map(k=>`
+    <tr><td>${k.product_id}</td><td style="color:#00f2fe; font-family:monospace;">${k.key_value}</td>
+    <td style="color:${k.sold ? '#f5576c' : '#00f2fe'}">${k.sold ? 'Đã bán' : 'Chưa bán'}</td></tr>`).join('');
 }
 
 init();
