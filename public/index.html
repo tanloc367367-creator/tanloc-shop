@@ -15,7 +15,7 @@
   @keyframes shineBrand { to { background-position:300% center; } }
   .brand-sub { font-size:1rem; font-weight:700; color:#ffd700; letter-spacing:3px; margin-top:8px; text-transform:uppercase; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; max-width:1100px; margin:30px auto; padding:0 20px; }
-  .card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:25px; position:relative; transition: all 0.3s ease; }
+  .card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:25px; transition: all 0.3s ease; }
   .card:hover { transform: translateY(-5px); border-color: #00f2fe; box-shadow: 0 10px 20px rgba(0,242,254,0.15); }
   .card h3 { font-size:1.3rem; margin-bottom:10px; }
   .desc { color:#aaa; font-size:0.9rem; margin-bottom:15px; min-height:40px; }
@@ -44,53 +44,14 @@
   .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; max-height: 90vh; overflow-y: auto; }
   .qr-wrap { background:#fff; padding:15px; border-radius:12px; text-align:center; margin:15px 0; display:inline-block; }
   .qr-wrap img { width:200px; height:200px; display:block; }
-  .bank-info { background:rgba(79,172,254,0.1); padding:15px; border-radius:12px; font-size:0.9rem; line-height:1.6; text-align:left; margin-top:15px; }
-  .bank-info b { color:#4facfe; }
-  .memo { color:#ffd700; font-family:monospace; font-weight:bold; font-size:1.1rem; }
-  .copy-btn { background: #4facfe; color: #000; border: none; padding: 4px 10px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; cursor: pointer; margin-left: 10px; }
   .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00f2fe; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; display:none; z-index:2000; }
   .toast.show { display:block; }
-
-  /* Màn hình chặn VIP + Chat */
-  #vip-lock-screen { position: fixed; inset: 0; background: #0f0c29; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
-  #vip-lock-screen h1 { color: #f5576c; margin-bottom: 15px; font-size: 1.8rem; }
-  #vip-lock-screen p { color: #ccc; margin-bottom: 10px; font-size: 0.95rem; line-height: 1.4; }
-  .device-code-box { background: #000; color: #00f2fe; font-family: monospace; font-size: 1.5rem; padding: 10px 20px; border-radius: 10px; border: 1px solid #00f2fe; margin: 10px 0; letter-spacing: 2px;}
-  
-  /* Khung Chat */
-  .chat-container { width: 100%; max-width: 500px; background: #1a1a2e; border-radius: 15px; border: 1px solid #333; margin-top: 15px; overflow: hidden; display: flex; flex-direction: column; height: 250px; }
-  .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-  .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; text-align: left; }
-  .chat-bubble.user { align-self: flex-end; background: #4facfe; color: #000; border-bottom-right-radius: 2px; }
-  .chat-bubble.admin { align-self: flex-start; background: #333; color: #fff; border-bottom-left-radius: 2px; }
-  .chat-input-area { display: flex; padding: 10px; background: #111; border-top: 1px solid #333; }
-  .chat-input-area input { flex: 1; padding: 10px; border-radius: 20px; border: none; background: #222; color: #fff; outline: none; margin-right: 10px; }
-  .chat-input-area button { width: 40px; height: 40px; border-radius: 50%; border: none; background: #00f2fe; color: #000; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<!-- MÀN HÌNH CHẶN (Có Chat trực tiếp) -->
-<div id="vip-lock-screen" class="hidden">
-  <h1>🔒 YÊU CẦU CẤP QUYỀN</h1>
-  <p>Gửi <b>Mã Thiết Bị</b> cho Admin để được duyệt.</p>
-  <div class="device-code-box" id="lock-device-id">Đang tải...</div>
-  <button class="btn" style="max-width: 300px; background:#00f2fe;" onclick="copyDeviceCode()">📋 Sao chép mã</button>
-  
-  <!-- KHUNG CHAT TRỰC TIẾP -->
-  <div class="chat-container">
-    <div class="chat-messages" id="lock-chat-messages">
-      <p style="text-align:center; color:#888; font-size:0.8rem;">Nhắn tin cho Admin tại đây</p>
-    </div>
-    <div class="chat-input-area">
-      <input id="lock-chat-input" placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendLockChat()">
-      <button onclick="sendLockChat()">➤</button>
-    </div>
-  </div>
-</div>
-
 <!-- TRANG KHÁCH HÀNG -->
-<div id="page-home" class="hidden">
+<div id="page-home">
   <div class="topbar">
     <div class="logo">🔑 TÂN LỘC</div>
     <button onclick="openHistory()" class="btn btn-sm" style="background:rgba(0,242,254,0.2); color:#00f2fe; border:1px solid #00f2fe;">🧾 Lịch Sử Mua</button>
@@ -126,22 +87,12 @@
   
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
-    <button class="tab" onclick="showTab('vip',this)">🔒 Cấp Quyền</button>
     <button class="tab" onclick="showTab('cards',this)">💳 Duyệt Thẻ</button>
-    <button class="tab" onclick="showTab('chats',this)">💬 Tin Nhắn</button>
     <button class="tab" onclick="showTab('keys',this)">🔑 Kho Key</button>
     <button class="tab" onclick="showTab('products',this)">📦 Sản phẩm</button>
   </div>
 
   <div class="panel active" id="orders"><table><thead><tr><th>Mã ĐH</th><th>Khách</th><th>SP</th><th>Key</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="admin-order-body"></tbody></table></div>
-
-  <div class="panel" id="vip">
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Cấp Quyền Truy Cập</h2>
-    <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
-      <input id="vip-input" placeholder="Nhập mã thiết bị..." style="width:100%; max-width:400px; padding:15px; border-radius:8px; border:2px solid #4facfe; background:#222; color:#fff; font-size:1.2rem; text-align:center; margin-bottom:15px; font-family:monospace; text-transform:uppercase;">
-      <br><button onclick="capQuyenVIP()" class="btn" style="max-width:400px; font-size:1.3rem; padding:15px; font-weight:900; background:linear-gradient(90deg,#00f2fe,#4facfe);">🔒 CẤP QUYỀN</button>
-    </div>
-  </div>
 
   <div class="panel" id="cards">
     <h2 style="margin-bottom:15px; font-size:1.2rem; color:#ffd700;">Cộng Tiền Thủ Công</h2>
@@ -160,28 +111,6 @@
     </div>
     <h2 style="margin-bottom:15px; font-size:1.2rem; color:#4facfe;">Danh sách thẻ chờ duyệt</h2>
     <table><thead><tr><th>Khách</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Hành động</th></tr></thead><tbody id="admin-card-body"></tbody></table>
-  </div>
-
-  <!-- TAB CHAT CỦA ADMIN -->
-  <div class="panel" id="chats">
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Hộp thư hỗ trợ</h2>
-    <div style="display:flex; gap:20px; flex-wrap:wrap;">
-      <div style="flex: 1; min-width: 200px; background:#1a1a2e; border-radius:10px; padding:10px; max-height:400px; overflow-y:auto;">
-        <h4 style="color:#4facfe; margin-bottom:10px;">Danh sách khách</h4>
-        <div id="admin-chat-list"></div>
-      </div>
-      <div style="flex: 2; min-width: 300px;">
-        <div class="chat-container" style="height: 400px; max-width: 100%;">
-          <div class="chat-messages" id="admin-chat-messages">
-            <p style="text-align:center; color:#888;">Chọn một khách hàng để xem tin nhắn</p>
-          </div>
-          <div class="chat-input-area">
-            <input id="admin-chat-input" placeholder="Trả lời khách..." onkeypress="if(event.key==='Enter') sendAdminChat()">
-            <button onclick="sendAdminChat()">➤</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="panel" id="keys">
@@ -210,8 +139,6 @@
 
 <script>
 const isAdmin = window.location.hash === '#admintanlocdepzai';
-const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A' };
-let currentAdminChatDevice = '';
 
 function getDeviceId() {
   let id = localStorage.getItem('vip_code');
@@ -222,92 +149,23 @@ function toast(m) { const t = document.getElementById('toast'); t.textContent = 
 
 async function init() {
   if (isAdmin) {
-    document.getElementById('vip-lock-screen').classList.add('hidden');
     document.getElementById('page-home').classList.add('hidden');
     document.getElementById('page-admin').classList.remove('hidden');
-    loadAdminOrders(); loadAdminCards(); loadAdminProducts(); loadKeySelect(); loadAdminChatList();
-    return;
+    loadAdminOrders(); loadAdminCards(); loadAdminProducts(); loadKeySelect();
+  } else {
+    document.getElementById('page-admin').classList.add('hidden');
+    document.getElementById('page-home').classList.remove('hidden');
+    document.getElementById('my-vip-code').textContent = getDeviceId();
+    loadBalance(); loadProducts();
   }
-
-  const deviceId = getDeviceId();
-  try {
-    const res = await fetch('/api/check-vip/' + deviceId);
-    const data = await res.json();
-    if (data.is_vip) {
-      document.getElementById('vip-lock-screen').classList.add('hidden');
-      document.getElementById('page-home').classList.remove('hidden');
-      document.getElementById('my-vip-code').textContent = deviceId;
-      loadBalance(); loadProducts();
-    } else {
-      document.getElementById('vip-lock-screen').classList.remove('hidden');
-      document.getElementById('lock-device-id').textContent = deviceId;
-      loadLockChat();
-    }
-  } catch (e) {
-    document.getElementById('vip-lock-screen').classList.remove('hidden');
-    document.getElementById('lock-device-id').textContent = deviceId;
-  }
-}
-
-function copyDeviceCode() { navigator.clipboard.writeText(document.getElementById('lock-device-id').textContent).then(() => toast('Đã sao chép!')); }
-
-async function loadLockChat() {
-  const deviceId = getDeviceId();
-  const res = await fetch('/api/chat/' + deviceId);
-  const msgs = await res.json();
-  const chatDiv = document.getElementById('lock-chat-messages');
-  if (msgs.length === 0) { chatDiv.innerHTML = '<p style="text-align:center; color:#888; font-size:0.8rem;">Nhắn tin cho Admin tại đây</p>'; return; }
-  chatDiv.innerHTML = msgs.map(m => `<div class="chat-bubble ${m.sender}">${m.message}</div>`).join('');
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-}
-
-async function sendLockChat() {
-  const input = document.getElementById('lock-chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  const deviceId = getDeviceId();
-  input.value = '';
-  await fetch('/api/chat/send', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId, message: msg }) });
-  loadLockChat();
-}
-
-async function loadAdminChatList() {
-  const res = await fetch('/api/admin/chats');
-  const msgs = await res.json();
-  const devices = [...new Set(msgs.map(m => m.device_id))];
-  document.getElementById('admin-chat-list').innerHTML = devices.map(d => `
-    <div onclick="openAdminChat('${d}')" style="padding:10px; border-bottom:1px solid #333; cursor:pointer; color:#fff;">
-      <b style="color:#00f2fe;">${d}</b>
-    </div>
-  `).join('') || '<p style="color:#888;">Chưa có tin nhắn nào</p>';
-}
-
-async function openAdminChat(deviceId) {
-  currentAdminChatDevice = deviceId;
-  const res = await fetch('/api/chat/' + deviceId);
-  const msgs = await res.json();
-  const chatDiv = document.getElementById('admin-chat-messages');
-  chatDiv.innerHTML = msgs.map(m => `<div class="chat-bubble ${m.sender}">${m.message}</div>`).join('');
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-}
-
-async function sendAdminChat() {
-  if (!currentAdminChatDevice) return toast('Chọn một khách để trả lời!');
-  const input = document.getElementById('admin-chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-  await fetch('/api/chat/reply', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId: currentAdminChatDevice, message: msg }) });
-  openAdminChat(currentAdminChatDevice);
-  loadAdminChatList();
 }
 
 async function loadBalance() {
   const id = getDeviceId();
-  const res = await fetch('/api/get-balance/' + id);
-  const data = await res.json();
+  const res = await fetch('/api/get-balance/' + id); const data = await res.json();
   document.getElementById('my-balance').textContent = data.balance.toLocaleString('vi-VN') + ' đ';
 }
+
 async function napThe() {
   const amount = document.getElementById('card-amount').value;
   const serial = document.getElementById('card-serial').value;
@@ -317,7 +175,7 @@ async function napThe() {
   const id = getDeviceId();
   await fetch('/api/nap-the', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId: id, amount, type, serial, pin }) });
   alert('Đã gửi yêu cầu nạp thẻ!');
-      document.getElementById('card-amount').value = ''; document.getElementById('card-serial').value = ''; document.getElementById('card-pin').value = '';
+  document.getElementById('card-amount').value = ''; document.getElementById('card-serial').value = ''; document.getElementById('card-pin').value = '';
 }
 
 async function loadProducts() {
@@ -336,8 +194,8 @@ async function buyQR(id) {
 function showTab(id, btn) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active'); btn.classList.add('active');
-  if(id==='orders') loadAdminOrders(); if(id==='cards') loadAdminCards(); if(id==='vip') loadAdminVip(); 
-  if(id==='chats') loadAdminChatList(); if(id==='products') loadAdminProducts(); if(id==='keys') loadAdminKeys();
+  if(id==='orders') loadAdminOrders(); if(id==='cards') loadAdminCards(); 
+  if(id==='products') loadAdminProducts(); if(id==='keys') loadAdminKeys();
 }
 
 async function loadAdminOrders() {
@@ -347,7 +205,6 @@ async function loadAdminOrders() {
     <td style="color:#00f2fe">${o.key_value || '-'}</td><td>${o.status}</td>
     <td>${o.status !== 'paid' ? `<button onclick="approve('${o.id}')" class="btn btn-sm">Duyệt</button>` : ''}</td></tr>`).join('');
 }
-
 async function approve(id) { await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); loadAdminOrders(); toast('Đã duyệt!'); }
 
 async function loadAdminCards() {
@@ -356,29 +213,7 @@ async function loadAdminCards() {
     <tr><td>${c.device_id}</td><td>${c.type}</td><td style="color:#ffd700">${c.amount.toLocaleString('vi-VN')}đ</td>
     <td>${c.serial}</td><td>${c.pin}</td><td><button onclick="approveCard('${c.id}')" class="btn btn-sm">Duyệt</button></td></tr>`).join('');
 }
-
 async function approveCard(id) { await fetch('/api/admin/cards/'+id+'/approve',{method:'POST'}); loadAdminCards(); toast('Đã duyệt thẻ!'); }
-
-async function loadAdminVip() {
-  const r = await fetch('/api/admin/pending-users'); const list = await r.json();
-  document.getElementById('admin-vip-body').innerHTML = list.map(u=>`
-    <tr><td style="color:#ffd700">${u.device_id}</td><td>${(u.balance||0).toLocaleString('vi-VN')}đ</td>
-    <td><button onclick="approveVip('${u.device_id}')" class="btn btn-sm">Cấp Quyền</button></td></tr>`).join('');
-}
-
-async function capQuyenVIP() {
-  const deviceId = document.getElementById('vip-input').value.trim().toUpperCase();
-  if (!deviceId) return toast('Nhập mã!');
-  if(!confirm('Cấp quyền cho: ' + deviceId + '?')) return;
-  await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
-  toast('Đã cấp quyền!'); document.getElementById('vip-input').value = ''; loadAdminVip();
-}
-
-async function approveVip(deviceId) {
-  if(!confirm('Cấp quyền cho: ' + deviceId + '?')) return;
-  await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
-  loadAdminVip(); toast('Đã cấp quyền!');
-}
 
 async function manualTopUp() {
   const deviceId = document.getElementById('manual-topup-device').value.trim().toUpperCase();
@@ -386,52 +221,34 @@ async function manualTopUp() {
   if (!deviceId) return toast('Vui lòng nhập mã thiết bị!');
   if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!');
   if (!confirm(`Cộng ${amount.toLocaleString('vi-VN')}đ cho thiết bị ${deviceId}?`)) return;
-  try {
-    const res = await fetch('/api/admin/add-balance', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId, amount }) });
-    const data = await res.json();
-    if (res.ok) {
-      toast('✅ ' + data.message);
-      document.getElementById('manual-topup-device').value = '';
-      document.getElementById('manual-topup-amount').value = '';
-    } else { toast('❌ ' + data.error); }
-  } catch (e) { toast('❌ Lỗi kết nối Server'); }
+  const res = await fetch('/api/admin/add-balance', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ deviceId, amount }) });
+  const data = await res.json();
+  if (res.ok) { toast('✅ ' + data.message); document.getElementById('manual-topup-device').value = ''; document.getElementById('manual-topup-amount').value = ''; } 
+  else { toast('❌ ' + data.error); }
 }
 
 async function loadKeySelect() { const r = await fetch('/api/products'); const list = await r.json(); document.getElementById('key-product').innerHTML = list.map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); }
-
 async function loadAdminProducts() {
   const r = await fetch('/api/products'); const list = await r.json();
   document.getElementById('admin-prod-body').innerHTML = list.map(p=>`<tr><td>${p.name}</td><td>${p.price.toLocaleString('vi-VN')}đ</td></tr>`).join('');
   loadKeySelect();
 }
-
 async function addProduct() {
   const name = document.getElementById('p-name').value; const price = +document.getElementById('p-price').value;
   if (!name || !price) return toast('Nhập tên và giá!');
   await fetch('/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,description:''})});
   loadAdminProducts(); toast('Đã thêm!');
 }
-
 async function addKey() {
-  const product_id = document.getElementById('key-product').value;
-  const key_value = document.getElementById('key-value').value;
-  const quantity = document.getElementById('key-quantity').value || 1;
+  const product_id = document.getElementById('key-product').value; const key_value = document.getElementById('key-value').value; const quantity = document.getElementById('key-quantity').value || 1;
   if (!key_value) return toast('Vui lòng nhập mã Key!');
-  try {
-    const res = await fetch('/api/admin/keys', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ product_id, key_value, quantity }) });
-    const data = await res.json();
-    if (data.ok) {
-      toast(data.message);
-      document.getElementById('key-value').value = '';
-      document.getElementById('key-quantity').value = '1';
-      loadAdminKeys();
-    } else { toast(data.error); }
-  } catch (e) { toast('Lỗi kết nối'); }
+  const res = await fetch('/api/admin/keys', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ product_id, key_value, quantity }) });
+  const data = await res.json();
+  if (data.ok) { toast(data.message); document.getElementById('key-value').value = ''; document.getElementById('key-quantity').value = '1'; loadAdminKeys(); } 
+  else { toast(data.error); }
 }
-
 async function loadAdminKeys() {
-  const productId = document.getElementById('key-product').value;
-  if(!productId) return;
+  const productId = document.getElementById('key-product').value; if(!productId) return;
   const r = await fetch('/api/admin/keys/' + productId); const list = await r.json();
   document.getElementById('admin-key-body').innerHTML = list.map(k=>`
     <tr><td>${k.product_id}</td><td style="color:#00f2fe; font-family:monospace;">${k.key_value}</td>
