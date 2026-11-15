@@ -40,45 +40,36 @@ app.post('/api/nap-the', async (req, res) => {
   try {
     const { deviceId, amount, type, serial, pin } = req.body;
     const { error } = await supabase.from('cards').insert([{ 
-      device_id: deviceId, 
-      amount: Number(amount), 
-      type, 
-      serial, 
-      pin, 
-      status: 'pending' 
+      device_id: deviceId, amount: Number(amount), type, serial, pin, status: 'pending' 
     }]);
     if (error) throw error;
     res.json({ ok: true, message: 'Đã gửi yêu cầu nạp thẻ!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Mua bằng QR (Tạo đơn chờ thanh toán)
+// Mua bằng QR
 app.post('/api/buy-qr/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
     const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
     const payment_code = 'DH' + Date.now().toString().slice(-6);
-    
     await supabase.from('orders').insert([{ product_id: productId, amount: product.price, status: 'pending', payment_code }]);
     res.json({ ok: true, payment_code, amount: product.price, productName: product.name });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy lịch sử mua hàng của khách
+// Lấy lịch sử mua hàng
 app.get('/api/my-history/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
     const { data: orders, error } = await supabase
-      .from('orders')
-      .select('*, products(name)')
-      .eq('device_id', deviceId)
-      .order('id', { ascending: false });
+      .from('orders').select('*, products(name)').eq('device_id', deviceId).order('id', { ascending: false });
     if (error) throw error;
     res.json(orders);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Kiểm tra trạng thái VIP của thiết bị
+// Kiểm tra trạng thái VIP
 app.get('/api/check-vip/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -108,7 +99,6 @@ app.post('/api/admin/orders/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
     const { data: order } = await supabase.from('orders').select('product_id').eq('id', id).single();
-    
     let { data: keys } = await supabase.from('keys').select('*').eq('product_id', order.product_id).eq('sold', false).limit(1);
     let keyValue = '';
     if (keys && keys.length > 0) {
@@ -117,7 +107,6 @@ app.post('/api/admin/orders/:id/approve', async (req, res) => {
     } else {
       keyValue = 'KEY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     }
-
     await supabase.from('orders').update({ status: 'paid', key_value: keyValue }).eq('id', id);
     res.json({ ok: true, key: keyValue });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -151,7 +140,7 @@ app.get('/api/admin/cards', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Duyệt thẻ (Cộng tiền cho khách)
+// Duyệt thẻ (Cộng tiền)
 app.post('/api/admin/cards/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
@@ -168,13 +157,12 @@ app.post('/api/admin/cards/:id/approve', async (req, res) => {
     } else {
       await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance, is_vip: false }]);
     }
-
     await supabase.from('cards').update({ status: 'approved' }).eq('id', id);
     res.json({ ok: true, message: 'Đã duyệt thẻ và cộng tiền!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Thêm sản phẩm mới
+// Thêm sản phẩm
 app.post('/api/admin/products', async (req, res) => {
   try {
     const { name, price, description } = req.body;
@@ -183,30 +171,23 @@ app.post('/api/admin/products', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Thêm Key vào kho (Hỗ trợ số lượng)
+// Thêm Key vào kho
 app.post('/api/admin/keys', async (req, res) => {
   try {
     const { product_id, key_value, quantity } = req.body;
     const qty = Number(quantity) || 1;
-    
     const keysToInsert = [];
     for (let i = 0; i < qty; i++) {
       const finalKey = qty > 1 ? `${key_value}-${i + 1}` : key_value;
-      keysToInsert.push({
-        product_id: product_id,
-        key_value: finalKey,
-        sold: false
-      });
+      keysToInsert.push({ product_id: product_id, key_value: finalKey, sold: false });
     }
-
     const { error } = await supabase.from('keys').insert(keysToInsert);
     if (error) throw error;
-    
     res.json({ ok: true, message: `Đã thêm thành công ${qty} key!` });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy danh sách key trong kho theo sản phẩm
+// Lấy danh sách key trong kho
 app.get('/api/admin/keys/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
