@@ -38,7 +38,7 @@
   input.admin-input { padding:8px; border-radius:6px; border:1px solid #444; background:#222; color:#fff; font-size:0.85rem; width:100%; max-width:300px; margin-right:5px;}
   .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; padding:20px; }
   .modal.active { display:flex; }
-  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; }
+  .modal-box { background:#1a1a2e; border-radius:20px; padding:30px; max-width:400px; width:100%; text-align:center; border:1px solid #4facfe; max-height: 90vh; overflow-y: auto; }
   .qr-wrap { background:#fff; padding:15px; border-radius:12px; text-align:center; margin:15px 0; display:inline-block; }
   .qr-wrap img { width:200px; height:200px; display:block; }
   .bank-info { background:rgba(79,172,254,0.1); padding:15px; border-radius:12px; font-size:0.9rem; line-height:1.6; text-align:left; margin-top:15px; }
@@ -64,11 +64,17 @@
 <div id="vip-lock-screen" class="hidden">
   <h1>🔒 YÊU CẦU CẤP QUYỀN</h1>
   <p>Chào mừng đến với TÂN LỘC SHOP.</p>
-  <p>Vui lòng gửi <b>Mã Thiết Bị</b> dưới đây cho Admin (kèm chuyển khoản) để được cấp quyền truy cập.</p>
+  <p>Vui lòng gửi <b>Mã Thiết Bị</b> dưới đây cho Admin để được cấp quyền truy cập.</p>
   
   <div class="device-code-box" id="lock-device-id">Đang tải...</div>
   
-  <button class="btn" style="max-width: 300px;" onclick="copyDeviceCode()">📋 Sao chép mã thiết bị</button>
+  <button class="btn" style="max-width: 350px; margin-bottom: 10px; background:#00f2fe;" onclick="copyDeviceCode()">📋 Sao chép mã thiết bị</button>
+  
+  <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 5px;">
+    <!-- SỬA LINK ZALO VÀ TELEGRAM CỦA BẠN Ở ĐÂY -->
+    <button class="btn" style="width: 160px; background: #0068FF; color: #fff;" onclick="contactAdmin('zalo')">💬 Nhắn Zalo</button>
+    <button class="btn" style="width: 160px; background: #0088cc; color: #fff;" onclick="contactAdmin('telegram')">✈️ Nhắn Telegram</button>
+  </div>
   
   <p style="margin-top: 20px; font-size: 0.85rem; color: #888;">Sau khi Admin duyệt, bạn hãy tải lại trang (F5) để vào web.</p>
 </div>
@@ -102,6 +108,7 @@
   <div class="tabs">
     <button class="tab active" onclick="showTab('orders',this)">🧾 Đơn hàng</button>
     <button class="tab" onclick="showTab('vip',this)">🔒 Cấp Quyền</button>
+    <button class="tab" onclick="showTab('cards',this)">💳 Duyệt Thẻ</button>
     <button class="tab" onclick="showTab('keys',this)">🔑 Kho Key</button>
     <button class="tab" onclick="showTab('products',this)">📦 Sản phẩm</button>
   </div>
@@ -112,8 +119,19 @@
 
   <!-- TAB CẤP QUYỀN VIP -->
   <div class="panel" id="vip">
-    <h2 style="margin-bottom:15px; font-size:1.2rem;">Danh sách thiết bị chờ duyệt</h2>
+    <h2 style="margin-bottom:15px; font-size:1.2rem;">Cấp Quyền Truy Cập</h2>
+    <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
+      <p style="margin-bottom:10px; color:#ccc;">Nhập mã thiết bị của khách (VD: VIP-NYOEVK):</p>
+      <input id="vip-input" placeholder="Nhập mã thiết bị..." style="width:100%; max-width:400px; padding:15px; border-radius:8px; border:2px solid #4facfe; background:#222; color:#fff; font-size:1.2rem; text-align:center; margin-bottom:15px; font-family:monospace; text-transform:uppercase;">
+      <br>
+      <button onclick="capQuyenVIP()" class="btn" style="max-width:400px; font-size:1.3rem; padding:15px; font-weight:900; background:linear-gradient(90deg,#00f2fe,#4facfe);">🔒 CẤP QUYỀN NGAY</button>
+    </div>
+    <h2 style="margin-bottom:15px; font-size:1.2rem;">Hoặc chọn từ danh sách:</h2>
     <table><thead><tr><th>Mã Thiết Bị (VIP)</th><th>Số dư</th><th>Hành động</th></tr></thead><tbody id="admin-vip-body"></tbody></table>
+  </div>
+
+  <div class="panel" id="cards">
+    <table><thead><tr><th>Khách (Ví)</th><th>Loại thẻ</th><th>Mệnh giá</th><th>Seri</th><th>Mã thẻ</th><th>Hành động</th></tr></thead><tbody id="admin-card-body"></tbody></table>
   </div>
 
   <div class="panel" id="keys">
@@ -139,10 +157,36 @@
   </div>
 </div>
 
+<div class="modal" id="pay-modal">
+  <div class="modal-box">
+    <h3 style="color:#4facfe; margin-bottom:15px;">💳 Thanh toán</h3>
+    <p id="pay-product" style="font-weight:bold; margin-bottom:10px;"></p>
+    <p id="pay-amount" style="font-size:2rem; color:#00f2fe; font-weight:900; margin-bottom:15px;"></p>
+    <div class="qr-wrap"><img id="pay-qr"></div>
+    <div class="bank-info">
+      <p>🏦 <b>Ngân hàng:</b> MB Bank <button class="copy-btn" onclick="copyText('MB Bank')">Copy</button></p>
+      <p>💳 <b>STK:</b> <span id="txt-stk">0123456789</span> <button class="copy-btn" onclick="copyText('0123456789')">Copy</button></p>
+      <p>👤 <b>Chủ TK:</b> NGUYEN VAN A</p>
+      <p>📝 <b>Nội dung CK:</b> <span class="memo" id="pay-memo"></span> <button class="copy-btn" onclick="copyMemo()">Copy</button></p>
+    </div>
+    <p style="font-size:0.85rem; color:#ffd700; margin-top:15px;">👉 Chuyển khoản đúng nội dung, sau đó nhắn Zalo/Telegram để nhận Key!</p>
+    <button class="btn" onclick="document.getElementById('pay-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
+  </div>
+</div>
+
+<div class="modal" id="history-modal">
+  <div class="modal-box" style="max-width: 600px; text-align: left;">
+    <h3 style="color:#4facfe; margin-bottom:15px; text-align: center;">🧾 Lịch Sử Mua Key</h3>
+    <div id="history-list" style="max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
+    <button class="btn" onclick="document.getElementById('history-modal').classList.remove('active')" style="margin-top:15px; background:#555; color:#fff;">Đóng</button>
+  </div>
+</div>
+
 <div class="toast" id="toast">Đã sao chép!</div>
 
 <script>
 const isAdmin = window.location.hash === '#admintanlocdepzai';
+const BANK = { bankId: '970422', account: '0123456789', name: 'NGUYEN VAN A' };
 
 function getDeviceId() {
   let id = localStorage.getItem('vip_code');
@@ -161,6 +205,7 @@ async function init() {
     document.getElementById('page-home').classList.add('hidden');
     document.getElementById('page-admin').classList.remove('hidden');
     loadAdminOrders();
+    loadAdminCards();
     loadAdminProducts();
     loadAdminVip();
     loadKeySelect();
@@ -168,27 +213,21 @@ async function init() {
   }
 
   const deviceId = getDeviceId();
-  
-  // Kiểm tra xem thiết bị đã được cấp quyền chưa
   try {
     const res = await fetch('/api/check-vip/' + deviceId);
     const data = await res.json();
     
     if (data.is_vip) {
-      // Đã được duyệt -> Vào web
       document.getElementById('vip-lock-screen').classList.add('hidden');
       document.getElementById('page-home').classList.remove('hidden');
       document.getElementById('my-vip-code').textContent = deviceId;
       loadBalance();
       loadProducts();
     } else {
-      // Chưa được duyệt -> Hiện màn hình chặn
       document.getElementById('vip-lock-screen').classList.remove('hidden');
       document.getElementById('lock-device-id').textContent = deviceId;
     }
   } catch (e) {
-    console.log('Lỗi kiểm tra VIP, có thể do mạng');
-    // Nếu lỗi mạng, tạm thời chặn
     document.getElementById('vip-lock-screen').classList.remove('hidden');
     document.getElementById('lock-device-id').textContent = deviceId;
   }
@@ -197,6 +236,16 @@ async function init() {
 function copyDeviceCode() {
   const code = document.getElementById('lock-device-id').textContent;
   navigator.clipboard.writeText(code).then(() => { toast('Đã sao chép mã thiết bị!'); });
+}
+
+function contactAdmin(type) {
+  const code = document.getElementById('lock-device-id').textContent;
+  const message = encodeURIComponent(`Chào Admin, tôi muốn được cấp quyền truy cập web. Mã thiết bị của tôi là: ${code}`);
+  if (type === 'zalo') {
+    window.open(`https://zalo.me/0123456789?text=${message}`, '_blank');
+  } else if (type === 'telegram') {
+    window.open(`https://t.me/username_cua_ban?text=${message}`, '_blank');
+  }
 }
 
 async function loadBalance() {
@@ -215,20 +264,46 @@ async function loadProducts() {
       <div class="card">
         <h3>${p.name}</h3><p class="desc">${p.description || ''}</p>
         <div class="price">${p.price.toLocaleString('vi-VN')}đ</div>
-        <button class="btn" onclick="buyQR('${p.id}')">📱 Mua bằng QR</button>
+                <button class="btn" onclick="buyQR('${p.id}')">📱 Mua bằng QR</button>
       </div>`).join('');
   } catch (e) { toast('Lỗi tải sản phẩm!'); }
 }
 
-// Hàm mua QR (giữ nguyên)
 async function buyQR(id) {
   try {
     const res = await fetch('/api/buy-qr/' + id, { method: 'POST' });
     const d = await res.json();
     if (!res.ok) return alert(d.error);
-    // Hiển thị QR (tạm lược bớt để code ngắn gọn)
-    alert('Tạo đơn hàng thành công! Mã đơn: ' + d.payment_code);
+    document.getElementById('pay-product').textContent = d.productName;
+    document.getElementById('pay-amount').textContent = d.amount.toLocaleString('vi-VN') + 'đ';
+    document.getElementById('pay-memo').textContent = d.payment_code;
+    document.getElementById('txt-stk').textContent = BANK.account;
+    document.getElementById('pay-qr').src = `https://img.vietqr.io/image/${BANK.bankId}-${BANK.account}-compact2.png?amount=${d.amount}&addInfo=${d.payment_code}&accountName=${encodeURIComponent(BANK.name)}`;
+    document.getElementById('pay-modal').classList.add('active');
   } catch (e) { alert('Lỗi kết nối'); }
+}
+
+async function openHistory() {
+  const deviceId = getDeviceId();
+  document.getElementById('history-modal').classList.add('active');
+  const listDiv = document.getElementById('history-list');
+  listDiv.innerHTML = '<p style="text-align:center;">Đang tải lịch sử...</p>';
+  try {
+    const res = await fetch('/api/my-history/' + deviceId);
+    const history = await res.json();
+    if (!history || history.length === 0) {
+      listDiv.innerHTML = '<p style="text-align:center; color:#aaa;">Bạn chưa có đơn hàng nào.</p>';
+      return;
+    }
+    listDiv.innerHTML = history.map(order => {
+      const prodName = order.products ? order.products.name : 'Sản phẩm';
+      if (order.status === 'paid') {
+        return `<div class="key-item paid"><div class="key-title">✅ ${prodName}</div><div class="key-code">${order.key_value}</div></div>`;
+      } else {
+        return `<div class="key-item"><div class="key-title">⏳ ${prodName}</div><div style="color:#aaa; font-size:0.85rem;">Đang chờ Admin duyệt.</div></div>`;
+      }
+    }).join('');
+  } catch (e) { listDiv.innerHTML = '<p style="text-align:center; color:red;">Lỗi tải lịch sử!</p>'; }
 }
 
 function showTab(id, btn) {
@@ -236,31 +311,12 @@ function showTab(id, btn) {
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active'); btn.classList.add('active');
   if(id==='orders') loadAdminOrders(); 
+  if(id==='cards') loadAdminCards();
   if(id==='vip') loadAdminVip();
   if(id==='products') loadAdminProducts(); 
   if(id==='keys') loadAdminKeys();
 }
 
-// Tải danh sách VIP chờ duyệt
-async function loadAdminVip() {
-  try {
-    const r = await fetch('/api/admin/pending-users'); const list = await r.json();
-    document.getElementById('admin-vip-body').innerHTML = list.map(u=>`
-      <tr>
-        <td style="color:#ffd700; font-family:monospace;">${u.device_id}</td>
-        <td>${(u.balance || 0).toLocaleString('vi-VN')}đ</td>
-        <td><button onclick="approveVip('${u.device_id}')" class="btn btn-sm" style="background:#00f2fe;">Cấp Quyền</button></td>
-      </tr>`).join('');
-  } catch (e) { toast('Lỗi tải danh sách VIP'); }
-}
-
-async function approveVip(deviceId) {
-  if(!confirm('Cấp quyền truy cập web cho thiết bị ' + deviceId + '?')) return;
-  await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
-  loadAdminVip(); toast('Đã cấp quyền VIP!');
-}
-
-// Các hàm Admin khác (Giữ nguyên logic cũ)
 async function loadAdminOrders() {
   try {
     const r = await fetch('/api/admin/orders'); const list = await r.json();
@@ -279,6 +335,63 @@ async function loadAdminOrders() {
 async function approve(id) { 
   await fetch('/api/admin/orders/'+id+'/approve',{method:'POST'}); 
   loadAdminOrders(); toast('Đã duyệt đơn!'); 
+}
+
+async function loadAdminCards() {
+  try {
+    const r = await fetch('/api/admin/cards'); const list = await r.json();
+    document.getElementById('admin-card-body').innerHTML = list.map(c=>`
+      <tr>
+        <td style="font-size:0.8rem;">${c.device_id}</td>
+        <td>${c.type}</td>
+        <td style="color:#ffd700">${c.amount.toLocaleString('vi-VN')}đ</td>
+        <td>${c.serial}</td>
+        <td>${c.pin}</td>
+        <td><button onclick="approveCard('${c.id}')" class="btn btn-sm" style="background:#00f2fe;">Duyệt</button></td>
+      </tr>`).join('');
+  } catch (e) { toast('Lỗi tải thẻ'); }
+}
+
+async function approveCard(id) {
+  await fetch('/api/admin/cards/' + id + '/approve', { method: 'POST' });
+  toast('Đã duyệt thẻ và cộng tiền!');
+  loadAdminCards();
+}
+
+async function loadAdminVip() {
+  try {
+    const r = await fetch('/api/admin/pending-users'); const list = await r.json();
+    document.getElementById('admin-vip-body').innerHTML = list.map(u=>`
+      <tr>
+        <td style="color:#ffd700; font-family:monospace;">${u.device_id}</td>
+        <td>${(u.balance || 0).toLocaleString('vi-VN')}đ</td>
+        <td><button onclick="approveVip('${u.device_id}')" class="btn btn-sm" style="background:#00f2fe;">Cấp Quyền</button></td>
+      </tr>`).join('');
+  } catch (e) { toast('Lỗi tải danh sách VIP'); }
+}
+
+async function capQuyenVIP() {
+  const deviceId = document.getElementById('vip-input').value.trim().toUpperCase();
+  if (!deviceId) return toast('Vui lòng nhập mã thiết bị!');
+  
+  if(!confirm('Cấp quyền truy cập web cho thiết bị: ' + deviceId + '?')) return;
+  
+  try {
+    const res = await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
+    if (res.ok) {
+      toast('✅ Đã cấp quyền thành công cho: ' + deviceId);
+      document.getElementById('vip-input').value = '';
+      loadAdminVip(); 
+    } else {
+      toast('❌ Lỗi cấp quyền, kiểm tra lại mã!');
+    }
+  } catch(e) { toast('Lỗi kết nối Server'); }
+}
+
+async function approveVip(deviceId) {
+  if(!confirm('Cấp quyền truy cập web cho thiết bị ' + deviceId + '?')) return;
+  await fetch('/api/admin/users/' + deviceId + '/approve', {method:'POST'});
+  loadAdminVip(); toast('Đã cấp quyền VIP!');
 }
 
 async function loadKeySelect() {
@@ -340,6 +453,19 @@ async function loadAdminKeys() {
       </tr>
     `).join('');
   } catch (e) { toast('Lỗi tải danh sách key'); }
+}
+
+function copyText(text) { navigator.clipboard.writeText(text).then(() => { toast('Đã sao chép!'); }); }
+function copyMemo() { copyText(currentMemo); }
+
+function startCountdown(duration, display) {
+  let timer = duration, hours, minutes, seconds;
+  setInterval(function () {
+    hours = parseInt(timer / 3600, 10); minutes = parseInt((timer % 3600) / 60, 10); seconds = parseInt(timer % 60, 10);
+    hours = hours < 10 ? "0" + hours : hours; minutes = minutes < 10 ? "0" + minutes : minutes; seconds = seconds < 10 ? "0" + seconds : seconds;
+    display.textContent = hours + ":" + minutes + ":" + seconds;
+    if (--timer < 0) timer = duration;
+  }, 1000);
 }
 
 init();
