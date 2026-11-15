@@ -109,7 +109,6 @@ app.post('/api/admin/orders/:id/approve', async (req, res) => {
     const { id } = req.params;
     const { data: order } = await supabase.from('orders').select('product_id').eq('id', id).single();
     
-    // Lấy 1 key chưa bán
     let { data: keys } = await supabase.from('keys').select('*').eq('product_id', order.product_id).eq('sold', false).limit(1);
     let keyValue = '';
     if (keys && keys.length > 0) {
@@ -156,32 +155,23 @@ app.get('/api/admin/cards', async (req, res) => {
 app.post('/api/admin/cards/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    // 1. Lấy thông tin thẻ
     const { data: card, error: cardError } = await supabase.from('cards').select('*').eq('id', id).single();
     if (cardError || !card) return res.status(404).json({ error: 'Không tìm thấy thẻ' });
-
-    // 2. Kiểm tra tránh cộng tiền 2 lần
     if (card.status === 'approved') return res.status(400).json({ error: 'Thẻ này đã được duyệt rồi!' });
 
-    // 3. Lấy số dư user
     const { data: user } = await supabase.from('users').select('balance').eq('device_id', card.device_id).single();
     const currentBalance = user ? Number(user.balance) : 0;
     const newBalance = currentBalance + Number(card.amount);
     
-    // 4. Cập nhật tiền
     if (user) {
       await supabase.from('users').update({ balance: newBalance }).eq('device_id', card.device_id);
     } else {
       await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance, is_vip: false }]);
     }
 
-    // 5. Đổi trạng thái thẻ
     await supabase.from('cards').update({ status: 'approved' }).eq('id', id);
     res.json({ ok: true, message: 'Đã duyệt thẻ và cộng tiền!' });
-  } catch (e) { 
-    console.error("Lỗi duyệt thẻ:", e);
-    res.status(500).json({ error: e.message }); 
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Thêm sản phẩm mới
