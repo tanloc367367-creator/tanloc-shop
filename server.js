@@ -35,7 +35,7 @@ app.get('/api/get-balance/:deviceId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Gửi yêu cầu nạp thẻ (Chờ Admin duyệt)
+// Gửi yêu cầu nạp thẻ
 app.post('/api/nap-the', async (req, res) => {
   try {
     const { deviceId, amount, type, serial, pin } = req.body;
@@ -58,7 +58,7 @@ app.post('/api/buy-qr/:productId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Lấy lịch sử mua hàng
+// Lịch sử mua hàng
 app.get('/api/my-history/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -80,6 +80,47 @@ app.get('/api/check-vip/:deviceId', async (req, res) => {
     }
     if (error) throw error;
     res.json({ is_vip: data.is_vip });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ================= API CHAT (TIN NHẮN) =================
+
+// Gửi tin nhắn từ khách
+app.post('/api/chat/send', async (req, res) => {
+  try {
+    const { deviceId, message } = req.body;
+    const { error } = await supabase.from('messages').insert([{ device_id: deviceId, message, sender: 'user' }]);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Lấy tin nhắn (dành cho khách và admin)
+app.get('/api/chat/:deviceId', async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { data, error } = await supabase.from('messages').select('*').eq('device_id', deviceId).order('created_at', { ascending: true });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin trả lời tin nhắn
+app.post('/api/chat/reply', async (req, res) => {
+  try {
+    const { deviceId, message } = req.body;
+    const { error } = await supabase.from('messages').insert([{ device_id: deviceId, message, sender: 'admin' }]);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin lấy tất cả cuộc hội thoại
+app.get('/api/admin/chats', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -121,13 +162,13 @@ app.get('/api/admin/pending-users', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Cấp quyền VIP cho thiết bị
+// Cấp quyền VIP
 app.post('/api/admin/users/:deviceId/approve', async (req, res) => {
   try {
     const { deviceId } = req.params;
     const { error } = await supabase.from('users').update({ is_vip: true }).eq('device_id', deviceId);
     if (error) throw error;
-    res.json({ ok: true, message: 'Đã cấp quyền VIP thành công!' });
+    res.json({ ok: true, message: 'Đã cấp quyền VIP!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -160,6 +201,28 @@ app.post('/api/admin/cards/:id/approve', async (req, res) => {
     await supabase.from('cards').update({ status: 'approved' }).eq('id', id);
     res.json({ ok: true, message: 'Đã duyệt thẻ và cộng tiền!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// API Admin: Cộng tiền thủ công cho thiết bị
+app.post('/api/admin/add-balance', async (req, res) => {
+  try {
+    const { deviceId, amount } = req.body;
+    if (!deviceId || !amount) return res.status(400).json({ error: 'Thiếu thông tin' });
+    
+    const { data: user } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
+    
+    const currentBalance = user ? Number(user.balance) : 0;
+    const newBalance = currentBalance + Number(amount);
+    
+    if (user) {
+      await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
+    } else {
+      await supabase.from('users').insert([{ device_id: deviceId, balance: newBalance, is_vip: false }]);
+    }
+    res.json({ ok: true, message: 'Đã cộng tiền thành công!' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Thêm sản phẩm
