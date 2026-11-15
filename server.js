@@ -27,7 +27,7 @@ app.get('/api/get-balance/:deviceId', async (req, res) => {
     const { deviceId } = req.params;
     let { data, error } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
     if (error && error.code === 'PGRST116') {
-      await supabase.from('users').insert([{ device_id: deviceId, balance: 0 }]);
+      await supabase.from('users').insert([{ device_id: deviceId, balance: 0, is_vip: false }]);
       return res.json({ balance: 0 });
     }
     if (error) throw error;
@@ -49,25 +49,6 @@ app.post('/api/nap-the', async (req, res) => {
     }]);
     if (error) throw error;
     res.json({ ok: true, message: 'Đã gửi yêu cầu nạp thẻ!' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Mua bằng ví (Trừ tiền, tạo đơn chờ duyệt)
-app.post('/api/buy-wallet/:productId', async (req, res) => {
-  try {
-    const { deviceId } = req.body;
-    const { productId } = req.params;
-    const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
-    const { data: user } = await supabase.from('users').select('balance').eq('device_id', deviceId).single();
-    
-    if (!product || !user) return res.status(404).json({ error: 'Không tìm thấy' });
-    if (user.balance < product.price) return res.status(400).json({ error: 'Số dư không đủ!' });
-    
-    const newBalance = user.balance - product.price;
-    await supabase.from('users').update({ balance: newBalance }).eq('device_id', deviceId);
-    await supabase.from('orders').insert([{ device_id: deviceId, product_id: productId, amount: product.price, status: 'waiting', payment_code: 'VIP' }]);
-    
-    res.json({ ok: true, balance: newBalance });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -97,6 +78,20 @@ app.get('/api/my-history/:deviceId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Kiểm tra trạng thái VIP của thiết bị
+app.get('/api/check-vip/:deviceId', async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { data, error } = await supabase.from('users').select('is_vip').eq('device_id', deviceId).single();
+    if (error && error.code === 'PGRST116') {
+      await supabase.from('users').insert([{ device_id: deviceId, balance: 0, is_vip: false }]);
+      return res.json({ is_vip: false });
+    }
+    if (error) throw error;
+    res.json({ is_vip: data.is_vip });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ================= API ADMIN =================
 
 // Lấy danh sách đơn hàng
@@ -112,11 +107,10 @@ app.get('/api/admin/orders', async (req, res) => {
 app.post('/api/admin/orders/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Lấy 1 key chưa bán trong kho của sản phẩm này
     const { data: order } = await supabase.from('orders').select('product_id').eq('id', id).single();
-    let { data: keys } = await supabase.from('keys').select('*').eq('product_id', order.product_id).eq('sold', false).limit(1);
     
+    // Lấy 1 key chưa bán
+    let { data: keys } = await supabase.from('keys').select('*').eq('product_id', order.product_id).eq('sold', false).limit(1);
     let keyValue = '';
     if (keys && keys.length > 0) {
       keyValue = keys[0].key_value;
@@ -130,6 +124,25 @@ app.post('/api/admin/orders/:id/approve', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Lấy danh sách thiết bị chờ duyệt VIP
+app.get('/api/admin/pending-users', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('users').select('*').eq('is_vip', false).order('id', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Cấp quyền VIP cho thiết bị
+app.post('/api/admin/users/:deviceId/approve', async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { error } = await supabase.from('users').update({ is_vip: true }).eq('device_id', deviceId);
+    if (error) throw error;
+    res.json({ ok: true, message: 'Đã cấp quyền VIP thành công!' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Lấy danh sách thẻ chờ duyệt
 app.get('/api/admin/cards', async (req, res) => {
   try {
@@ -139,11 +152,10 @@ app.get('/api/admin/cards', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Duyệt thẻ (Cộng tiền cho khách - Đã sửa lỗi)
+// Duyệt thẻ (Cộng tiền cho khách)
 app.post('/api/admin/cards/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    
     // 1. Lấy thông tin thẻ
     const { data: card, error: cardError } = await supabase.from('cards').select('*').eq('id', id).single();
     if (cardError || !card) return res.status(404).json({ error: 'Không tìm thấy thẻ' });
@@ -160,7 +172,7 @@ app.post('/api/admin/cards/:id/approve', async (req, res) => {
     if (user) {
       await supabase.from('users').update({ balance: newBalance }).eq('device_id', card.device_id);
     } else {
-      await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance }]);
+      await supabase.from('users').insert([{ device_id: card.device_id, balance: newBalance, is_vip: false }]);
     }
 
     // 5. Đổi trạng thái thẻ
