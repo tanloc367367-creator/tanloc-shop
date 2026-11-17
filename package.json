@@ -1,8 +1,0 @@
-{
-  "name": "tanloc-shop",
-  "version": "1.0.0",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "express": "^4.19.2"
-  }
-}
