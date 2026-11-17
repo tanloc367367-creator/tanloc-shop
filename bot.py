@@ -33,7 +33,7 @@ def send_welcome(message):
 @bot.message_handler(func=lambda message: message.text == "🛒 Mua Key")
 def buy_key(message):
     noi_dung = f"MUAKEY {message.from_user.id}"
-    text = (f"👉 Vui lòng chuyển **{50.000đ}**\n"
+    text = (f"👉 Vui lòng chuyển **50.000đ**\n"
             f"🏦 Ngân hàng: **{MOMO}**\n"
             f"💳 STK: **{PMC2605614200000037}**\n"
             f"📝 Nội dung: **{DONECKSHOPKEYTANLOC}**\n\n"
