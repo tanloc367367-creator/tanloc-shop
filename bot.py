@@ -4,7 +4,7 @@ import sqlite3
 from flask import Flask, request
 
 # ================= CẤU HÌNH =================
-BOT_TOKEN = os.environ.get('9238332861:AAGlo_aJxLohg1KO-syXahx8IIm7yALnSxg')
+BOT_TOKEN = os.environ.get'9268542841:AAHJvJtXD7oXLfTlNeUyaSanWH5yni12DhQ'
 ADMIN_ID = 8240363472 # <-- SỬA LẠI THÀNH ID TELEGRAM CỦA BẠN
 # ============================================
 
