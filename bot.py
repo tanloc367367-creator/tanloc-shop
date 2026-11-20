@@ -1,7 +1,7 @@
 import os, telebot, sqlite3, random, time
 from datetime import datetime, timedelta
 from flask import Flask, request
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions
 
 BOT_TOKEN = '9268542841:AAHJvJtXD7oXLfTlNeUyaSanWH5yni12DhQ'
 ADMIN_ID = 8240363472 # SỬA ID CỦA BẠN
@@ -46,9 +46,11 @@ def get_menu():
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    text = "Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv @ten - Thêm CTV\n/congkey @ten so - Cộng key\n/trukey @ten so - Trừ key\n/xoactv @ten - Xóa CTV\n/thongke - Tổng quan\n/thongbao [nội dung]\n/reset - Reset toàn bộ" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay - Quay số nhận key\n/diemdanh - Điểm danh hàng ngày\n/profile - Xem thẻ CTV\n/setquote [châm ngôn]\n/khen @ten - Thả tim"
+    text = "Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv @ten - Thêm CTV\n/congkey @ten so - Cộng key\n/trukey @ten so - Trừ key\n/xoactv @ten - Xóa CTV\n/thongke - Tổng quan\n/thongbao [nội dung]\n/reset - Reset toàn bộ\n\n🛡 Quản trị nhóm (Cần Reply tin nhắn):\n/kick - Đuổi khỏi nhóm\n/camchat [thời gian] - Cấm chat (VD: 1h, 30m)\n/add @ten - Tạo link mời" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay - Quay số nhận key\n/diemdanh - Điểm danh hàng ngày\n/profile - Xem thẻ CTV\n/setquote [châm ngôn]\n/khen @ten - Thả tim"
     try: bot.send_photo(message.chat.id, BANNER_URL, caption=text, parse_mode='HTML', reply_markup=get_menu())
-    except: bot.reply_to(message, text, parse_mode='HTML', reply_markup=get_menu())
+    except Exception as e: 
+        print(f"Lỗi ảnh: {e}")
+        bot.reply_to(message, text, parse_mode='HTML', reply_markup=get_menu())
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('menu_'))
 def handle_menu(call):
@@ -260,6 +262,55 @@ def reset(message):
     conn.commit(); conn.close()
     bot.reply_to(message, "🧹 Đã reset toàn bộ!")
 
+# ================= QUẢN TRỊ NHÓM =================
+def parse_time(time_str):
+    try:
+        unit = time_str[-1].lower()
+        val = int(time_str[:-1])
+        if unit == 'm': return val * 60
+        if unit == 'h': return val * 3600
+        if unit == 'd': return val * 86400
+        return val # Mặc định là giây nếu không có chữ
+    except: return 60 # Lỗi thì mặc định cấm 60s
+
+@bot.message_handler(commands=['kick'])
+def kick_user(message):
+    if not is_admin(message): return
+    if not message.reply_to_message:
+        return bot.reply_to(message, "❌ Hãy Reply (trả lời) tin nhắn của người muốn kick và gõ /kick")
+    try:
+        bot.kick_chat_member(message.chat.id, message.reply_to_message.from_user.id)
+        bot.reply_to(message, f"👢 Đã đuổi {message.reply_to_message.from_user.first_name} khỏi nhóm!")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Lỗi (Bot cần quyền Admin): {e}")
+
+@bot.message_handler(commands=['camchat'])
+def mute_user(message):
+    if not is_admin(message): return
+    if not message.reply_to_message:
+        return bot.reply_to(message, "❌ Hãy Reply tin nhắn của người đó và gõ:\n/camchat [thời gian]\n(VD: /camchat 1h, /camchat 30m)")
+    try:
+        parts = message.text.split()
+        if len(parts) < 2: return bot.reply_to(message, "❌ Thiếu thời gian! VD: /camchat 1h")
+        duration = parse_time(parts[1])
+        until = int(time.time()) + duration
+        perms = ChatPermissions(can_send_messages=False)
+        bot.restrict_chat_member(message.chat.id, message.reply_to_message.from_user.id, perms, until_date=until)
+        bot.reply_to(message, f"🤐 Đã cấm chat {message.reply_to_message.from_user.first_name} trong {parts[1]}!")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Lỗi (Bot cần quyền Admin): {e}")
+
+@bot.message_handler(commands=['add'])
+def add_user(message):
+    if not is_admin(message): return
+    try:
+        # Tạo link mời tham gia nhóm (chỉ dùng 1 lần)
+        link = bot.create_chat_invite_link(message.chat.id, member_limit=1)
+        bot.reply_to(message, f"🔗 Link mời tham gia nhóm (chỉ dùng được 1 lần):\n{link.invite_link}\n\nHãy gửi link này cho người cần thêm vào nhóm.")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Lỗi (Bot cần quyền Admin tạo link mời): {e}")
+
+# ================= WEBHOOK =================
 @app.route('/' + BOT_TOKEN, methods=['POST'])
 def getMessage():
     update = telebot.types.Update.de_json(request.get_data().decode('utf-8'))
