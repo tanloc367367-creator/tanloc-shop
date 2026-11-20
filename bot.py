@@ -8,8 +8,8 @@ from flask import Flask, request
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # ================= CẤU HÌNH =================
-BOT_TOKEN = '9268542841:AAHJvJtXD7oXLfTlNeUyaSanWH5yni12DhQ'
-ADMIN_ID = 8240363472 # SỬA THÀNH ID CỦA BẠN
+BOT_TOKEN = 'DÁN_TOKEN_CỦA_BẠN_VÀO_ĐÂY'
+ADMIN_ID = 123456789 # SỬA THÀNH ID CỦA BẠN
 BANNER_URL = 'https://i.postimg.cc/G3P8qX0G/file-000000005d588209b919bcce17087b9f.png'
 # ============================================
 
@@ -24,13 +24,10 @@ def get_today():
 def init_db():
     conn = sqlite3.connect('ctv_data.db')
     c = conn.cursor()
-    # Tạo bảng với đầy đủ các cột mới
     c.execute('''CREATE TABLE IF NOT EXISTS ctv
                  (username TEXT PRIMARY KEY, keys INTEGER, rank TEXT, 
                  join_date TEXT, quote TEXT, last_checkin TEXT, streak INTEGER, 
                  last_wheel TEXT, kudos INTEGER)''')
-    
-    # Nếu bảng đã tồn tại từ code cũ, tự động thêm các cột mới vào
     try:
         c.execute("ALTER TABLE ctv ADD COLUMN join_date TEXT")
         c.execute("ALTER TABLE ctv ADD COLUMN quote TEXT")
@@ -39,8 +36,7 @@ def init_db():
         c.execute("ALTER TABLE ctv ADD COLUMN last_wheel TEXT")
         c.execute("ALTER TABLE ctv ADD COLUMN kudos INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
-        pass # Các cột đã tồn tại thì bỏ qua
-        
+        pass
     conn.commit()
     conn.close()
 
@@ -125,7 +121,6 @@ def handle_menu_callback(call):
 
 # --- CÁC TÍNH NĂNG GIẢI TRÍ MỚI ---
 
-# 1. Lệnh /vongquay
 @bot.message_handler(commands=['vongquay'])
 def vong_quay(message):
     username = f"@{message.from_user.username}" if message.from_user.username else None
@@ -152,7 +147,7 @@ def vong_quay(message):
         return
         
     rewards = [0, 1, 1, 3, 5]
-    weights = [40, 30, 15, 10, 5] # Tỉ lệ phần trăm (tổng = 100)
+    weights = [40, 30, 15, 10, 5]
     won_keys = random.choices(rewards, weights=weights, k=1)[0]
     
     new_keys = current_keys + won_keys
@@ -169,7 +164,6 @@ def vong_quay(message):
     else:
         bot.reply_to(message, f"🎊 Chúc mừng! Bạn nhận được <b>{won_keys} key</b>.\n(Tổng: {new_keys} key)", parse_mode='HTML')
 
-# 2. Lệnh /diemdanh
 @bot.message_handler(commands=['diemdanh'])
 def diem_danh(message):
     username = f"@{message.from_user.username}" if message.from_user.username else None
@@ -197,19 +191,18 @@ def diem_danh(message):
         conn.close()
         return
         
-    # Xử lý chuỗi ngày (Streak)
     if last_checkin == yesterday:
         streak += 1
     else:
         streak = 1
         
     bonus_text = ""
-    added_keys = 1 # Mặc định 1 key/ngày
+    added_keys = 1 
     
     if streak >= 7:
-        added_keys += 5 # Thưởng thêm 5 key nếu chuỗi 7 ngày
+        added_keys += 5
         bonus_text = "\n🔥 <b>TUYỆT VỜI! Bạn đã điểm danh đủ 7 ngày liên tiếp. Thưởng thêm 5 key!</b>"
-        streak = 0 # Reset chuỗi sau khi nhận thưởng
+        streak = 0 
         
     new_keys = current_keys + added_keys
     new_rank = update_keys(username, new_keys)
@@ -220,7 +213,6 @@ def diem_danh(message):
     
     bot.reply_to(message, f"✅ Điểm danh thành công! Nhận <b>{added_keys} key</b>.\nChuỗi điểm danh: {streak}/7 ngày.{bonus_text}\n(Tổng: {new_keys} key - {new_rank})", parse_mode='HTML')
 
-# 3. Lệnh /profile (Thẻ căn cước)
 @bot.message_handler(commands=['profile'])
 def xem_profile(message):
     username = f"@{message.from_user.username}" if message.from_user.username else None
@@ -254,7 +246,6 @@ def xem_profile(message):
             f"💬 <b>Châm ngôn:</b> <i>\"{quote}\"</i>")
     bot.reply_to(message, text, parse_mode='HTML')
 
-# 4. Lệnh /setquote
 @bot.message_handler(commands=['setquote'])
 def set_quote(message):
     username = f"@{message.from_user.username}" if message.from_user.username else None
@@ -278,7 +269,6 @@ def set_quote(message):
     
     bot.reply_to(message, f"✅ Đã cập nhật châm ngôn của bạn thành:\n<i>\"{text}\"</i>", parse_mode='HTML')
 
-# 5. Lệnh /khen (Thả tim)
 @bot.message_handler(commands=['khen'])
 def khen_nguoi(message):
     parts = message.text.split()
@@ -311,7 +301,6 @@ def khen_nguoi(message):
         bot.reply_to(message, f"💖 <b>{my_username}</b> đã gửi một lời khen ngợi đến <b>{target}</b>!\nTổng lượt khen: {current_kudos + 1}.", parse_mode='HTML')
     conn.close()
 
-# 6. Lệnh /thongbao (Admin)
 @bot.message_handler(commands=['thongbao'])
 def thong_bao(message):
     if not is_admin(message):
@@ -340,13 +329,13 @@ def thong_bao(message):
         try:
             bot.send_message(user[0], f"📢 <b>THÔNG BÁO TỪ ADMIN</b> 📢\n\n{text}", parse_mode='HTML')
             success += 1
-            time.sleep(0.1) # Tránh bị Telegram chặn do gửi quá nhanh
+            time.sleep(0.1)
         except Exception:
             failed += 1
             
     bot.reply_to(message, f"✅ Đã gửi thành công: {success} người.\n❌ Thất bại: {failed} người (Do họ chưa start bot).")
 
-# --- CÁC HÀM CŨ ĐƯỢC GIỮ NGUYÊN ---
+# --- CÁC HÀM CŨ ---
 
 @bot.message_handler(commands=['xephang'])
 def xep_hang(message):
@@ -523,24 +512,40 @@ def cong_key(message):
 
 @bot.message_handler(commands=['trukey'])
 def tru_key(message):
-if not is_admin(message): return
-try:
-    parts = message.text.split()
-    username = parts[1]
-    minus_keys = int(parts[2])
-    
-    conn = sqlite3.connect('ctv_data.db')
-    c = conn.cursor()
-    c.execute("SELECT keys FROM ctv WHERE username=?", (username,))
-    data = c.fetchone()
-    
-    if data:
-        current_keys = data[0]
-        new_keys = max(0, current_keys - minus_keys) 
-        new_rank = update_keys(username, new_keys)
+    if not is_admin(message): return
+    try:
+        parts = message.text.split()
+        username = parts[1]
+        minus_keys = int(parts[2])
+        
+        conn = sqlite3.connect('ctv_data.db')
+        c = conn.cursor()
+        c.execute("SELECT keys FROM ctv WHERE username=?", (username,))
+        data = c.fetchone()
+        
+        if data:
+            current_keys = data[0]
+            new_keys = max(0, current_keys - minus_keys) 
+            new_rank = update_keys(username, new_keys)
         bot.reply_to(message, f"✅ Đã trừ {minus_keys} key của {username}.\nTổng: {new_keys} key\nCấp bậc: {new_rank}")
     else:
         bot.reply_to(message, f"❌ Không tìm thấy {username}.")
     conn.close()
 except Exception:
-    bot.reply_to(message, "❌ Sai cú pháp! Dùng: /trukey @ten 5")    
+    bot.reply_to(message, "❌ Sai cú pháp! Dùng: /trukey @ten 5")
+# ================= CẤU HÌNH WEBHOOK CHO RENDER =================
+@app.route('/' + BOT_TOKEN, methods=['POST'])
+def getMessage():
+    json_string = request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+    return "!", 200
+
+@app.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url=f"{os.environ.get('RENDER_EXTERNAL_URL')}/{BOT_TOKEN}")
+    return "Bot đang chạy!", 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
