@@ -6,7 +6,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermis
 BOT_TOKEN = '9268542841:AAHJvJtXD7oXLfTlNeUyaSanWH5yni12DhQ' # ĐỔI TOKEN MỚI
 ADMIN_ID = 8240363472
 BANNER_URL = 'https://i.postimg.cc/G3P8qX0G/file-000000005d588209b919bcce17087b9f.png'
-GAME_BANNER_URL = 'https://i.postimg.cc/...' # THAY LINK ẢNH GAME VÀO ĐÂY
+GAME_BANNER_URL = 'https://i.postimg.cc/nztdrLpQ/file-0000000089dc8211b7bef528f2d9543b.png' # THAY LINK ẢNH GAME VÀO ĐÂY
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
