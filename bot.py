@@ -46,7 +46,7 @@ def get_menu():
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    text = "Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv @ten - Thêm CTV\n/congkey @ten so - Cộng key\n/trukey @ten so - Trừ key\n/xoactv @ten - Xóa CTV\n/thongke - Tổng quan\n/thongbao [nội dung]\n/reset - Reset toàn bộ\n\n🛡 Quản trị nhóm (Cần Reply tin nhắn):\n/kick - Đuổi khỏi nhóm\n/camchat [thời gian] - Cấm chat (VD: 1h, 30m)\n/add @ten - Tạo link mời" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay - Quay số nhận key\n/diemdanh - Điểm danh hàng ngày\n/profile - Xem thẻ CTV\n/setquote [châm ngôn]\n/khen @ten - Thả tim"
+    text = "Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv @ten - Thêm CTV\n/congkey @ten so - Cộng key\n/trukey @ten so - Trừ key\n/xoactv @ten - Xóa CTV\n/thongke - Tổng quan\n/thongbao [nội dung]\n/reset - Reset toàn bộ\n\n🛡 Quản trị nhóm (Cần Reply tin nhắn):\n/kick - Đuổi khỏi nhóm\n/camchat [thời gian] - Cấm chat (VD: 1h, 30m)\n/add - Tạo link mời tham gia" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay - Quay số nhận key\n/diemdanh - Điểm danh hàng ngày\n/profile - Xem thẻ CTV\n/setquote [châm ngôn]\n/khen @ten - Thả tim"
     try: bot.send_photo(message.chat.id, BANNER_URL, caption=text, parse_mode='HTML', reply_markup=get_menu())
     except Exception as e: 
         print(f"Lỗi ảnh: {e}")
@@ -270,8 +270,8 @@ def parse_time(time_str):
         if unit == 'm': return val * 60
         if unit == 'h': return val * 3600
         if unit == 'd': return val * 86400
-        return val # Mặc định là giây nếu không có chữ
-    except: return 60 # Lỗi thì mặc định cấm 60s
+        return val 
+    except: return 60 
 
 @bot.message_handler(commands=['kick'])
 def kick_user(message):
@@ -295,16 +295,22 @@ def mute_user(message):
         duration = parse_time(parts[1])
         until = int(time.time()) + duration
         perms = ChatPermissions(can_send_messages=False)
-        bot.restrict_chat_member(message.chat.id, message.reply_to_message.from_user.id, perms, until_date=until)
+        
+        bot.restrict_chat_member(
+            chat_id=message.chat.id, 
+            user_id=message.reply_to_message.from_user.id, 
+            permissions=perms, 
+            until_date=until
+        )
+        
         bot.reply_to(message, f"🤐 Đã cấm chat {message.reply_to_message.from_user.first_name} trong {parts[1]}!")
     except Exception as e:
-        bot.reply_to(message, f"❌ Lỗi (Bot cần quyền Admin): {e}")
+        bot.reply_to(message, f"❌ Lỗi: {e}")
 
 @bot.message_handler(commands=['add'])
 def add_user(message):
     if not is_admin(message): return
     try:
-        # Tạo link mời tham gia nhóm (chỉ dùng 1 lần)
         link = bot.create_chat_invite_link(message.chat.id, member_limit=1)
         bot.reply_to(message, f"🔗 Link mời tham gia nhóm (chỉ dùng được 1 lần):\n{link.invite_link}\n\nHãy gửi link này cho người cần thêm vào nhóm.")
     except Exception as e:
