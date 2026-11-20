@@ -353,11 +353,15 @@ def admin_commands(message):
             db_query("INSERT INTO ctv (username, keys, xu, rank, join_date) VALUES (?, 0, 0, ?, ?)", (uname, "Đồng 🥉", get_today()), commit=True)
             bot.reply_to(message, f"✅ Đã thêm {uname}.")
             chat_id = db_query("SELECT chat_id FROM ctv WHERE username=?", (uname,), fetch='one')[0]
-            if chat_id: bot.send_message(chat_id, f"🎉 Chào mừng <b>{uname}</b>! Gõ /start để xem tính năng.", parse_mode='HTML')
-            else: bot.reply_to(message, f"💡 {uname} chưa bấm /start.")
-                    elif cmd == 'xoactv':
+            if chat_id: 
+                bot.send_message(chat_id, f"🎉 Chào mừng <b>{uname}</b>! Gõ /start để xem tính năng.", parse_mode='HTML')
+            else: 
+                bot.reply_to(message, f"💡 {uname} chưa bấm /start.")
+        
+        elif cmd == 'xoactv':
             db_query("DELETE FROM ctv WHERE username=?", (message.text.split()[1],), commit=True)
             bot.reply_to(message, "🗑 Đã xóa!")
+        
         elif cmd in ['congkey', 'trukey']:
             uname, num = message.text.split()[1], message.text.split()[2]
             num = int(num) if cmd == 'congkey' else -int(num)
@@ -366,7 +370,9 @@ def admin_commands(message):
             old_r, new_k = get_rank(data[0]), max(0, data[0] + num)
             new_r = update_keys(uname, new_k)
             bot.reply_to(message, f"✅ Đã cập nhật {num} key cho {uname}.\nTổng: {new_k} ({new_r})")
-            if old_r != new_r and num > 0: bot.send_message(message.chat.id, f"🎉 Chúc mừng <b>{uname}</b> thăng cấp <b>{new_r}</b>!", parse_mode='HTML')
+            if old_r != new_r and num > 0: 
+                bot.send_message(message.chat.id, f"🎉 Chúc mừng <b>{uname}</b> thăng cấp <b>{new_r}</b>!", parse_mode='HTML')
+        
         elif cmd in ['congxu', 'truxu']:
             uname, num = message.text.split()[1], int(message.text.split()[2])
             num = num if cmd == 'congxu' else -num
@@ -375,17 +381,20 @@ def admin_commands(message):
             new_x = max(0, data[0] + num)
             db_query("UPDATE ctv SET xu=? WHERE username=?", (new_x, uname), commit=True)
             bot.reply_to(message, f"✅ Đã cập nhật {num} xu cho {uname}.\nTổng: {new_x} xu")
+        
         elif cmd == 'thongke':
             total = db_query("SELECT COUNT(*), SUM(keys), SUM(xu) FROM ctv", fetch='one')
             top1 = db_query("SELECT username, keys FROM ctv ORDER BY keys DESC LIMIT 1", fetch='one')
             text = f"📈 <b>THỐNG KÊ</b>\n\n👥 Tổng CTV: <b>{total[0]}</b>\n🔑 Tổng Key: <b>{total[1] or 0}</b>\n🪙 Tổng Xu: <b>{total[2] or 0}</b>\n"
             if top1: text += f"\n🥇 Top 1: {top1[0]} ({top1[1]} key)"
             bot.reply_to(message, text, parse_mode='HTML')
+        
         elif cmd == 'reset':
             db_query("UPDATE ctv SET keys=0, xu=0, rank='Đồng 🥉', streak=0, kudos=0", commit=True)
             bot.reply_to(message, "🧹 Đã reset toàn bộ Key và Xu!")
+            
     except Exception as e: 
-        bot.reply_to(message, f"❌ Sai cú pháp! Lỗi: {e}")
+        bot.reply_to(message, f"❌ Sai cú pháp hoặc lỗi! Chi tiết: {e}")
 
 # ================= LỆNH SOI CẦU =================
 @bot.message_handler(commands=['soicau'])
