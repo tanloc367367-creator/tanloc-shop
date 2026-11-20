@@ -6,11 +6,11 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermis
 BOT_TOKEN = '9268542841:AAHJvJtXD7oXLfTlNeUyaSanWH5yni12DhQ' # ĐỔI TOKEN MỚI
 ADMIN_ID = 8240363472
 BANNER_URL = 'https://i.postimg.cc/G3P8qX0G/file-000000005d588209b919bcce17087b9f.png'
-GAME_BANNER_URL = 'https://i.postimg.cc/nztdrLpQ/file-0000000089dc8211b7bef528f2d9543b.png' # THAY LINK ẢNH GAME VÀO ĐÂY
+GAME_BANNER_URL = 'https://i.postimg.cc/...' # THAY LINK ẢNH GAME VÀO ĐÂY
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
-game_data = {} # Lưu data tạm cho tất cả game
+game_data = {} 
 
 def get_today(): return datetime.now().strftime("%Y-%m-%d")
 def is_admin(msg): return msg.from_user.id == ADMIN_ID
@@ -34,7 +34,7 @@ def db_query(query, params=(), fetch=False, commit=False):
 
 # Khởi tạo DB
 db_query('''CREATE TABLE IF NOT EXISTS ctv (username TEXT PRIMARY KEY, chat_id INTEGER, keys INTEGER, rank TEXT, join_date TEXT, quote TEXT, last_checkin TEXT, streak INTEGER, last_wheel TEXT, kudos INTEGER)''')
-for col in ["chat_id INTEGER", "join_date TEXT", "quote TEXT", "last_checkin TEXT", "streak INTEGER DEFAULT 0", "last_wheel TEXT", "kudos INTEGER DEFAULT 0"]:
+for col in ["chat_id INTEGER", "join_date TEXT", "quote TEXT", "last_checkin TEXT", "streak INTEGER DEFAULT 0", "last_wheel TEXT", "kudos INTEGER DEFAULT 0", "next_tx TEXT"]:
     try: db_query(f"ALTER TABLE ctv ADD COLUMN {col}", commit=True)
     except: pass
 
@@ -65,7 +65,7 @@ def get_menu():
 def get_game_menu():
     m = InlineKeyboardMarkup()
     m.row(InlineKeyboardButton("🎰 Tài Xỉu", callback_data="game_taixiu"), InlineKeyboardButton("🔢 Đoán Số", callback_data="game_doanso"))
-    m.row(InlineKeyboardButton("✂️ Búa Kéo Bao", callback_data="game_buakeobao"), InlineKeyboardButton("❓ Đố Vui", callback_data="game_dovui"))
+    m.row(InlineKeyboardButton("✂️ Búa Kéo Bao", callback_data="game_keobuabao"), InlineKeyboardButton("❓ Đố Vui", callback_data="game_dovui"))
     m.row(InlineKeyboardButton("💣 Lật Thẻ", callback_data="game_latthe"))
     return m
 
@@ -80,7 +80,7 @@ def send_welcome(message):
         else:
             db_query("INSERT INTO ctv (username, chat_id, keys, rank, join_date) VALUES (?, ?, 0, ?, ?)", (uname, message.chat.id, "Đồng 🥉", get_today()), commit=True)
 
-    text = ("Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv /congkey /trukey /xoactv /thongke /thongbao /reset\n\n🛡 Quản trị nhóm:\n/kick /camchat /add\n\n🎮 Gõ /game để xem các game giải trí!" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay /diemdanh /profile /setquote /khen\n/game - Kho game giải trí")
+    text = ("Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv /congkey /trukey /xoactv /thongke /thongbao /reset /soicautx\n\n🛡 Quản trị nhóm:\n/kick /camchat /add\n\n🎮 Gõ /game để xem các game giải trí!" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay /diemdanh /profile /setquote /khen\n/game - Kho game giải trí")
     try: bot.send_photo(message.chat.id, BANNER_URL, caption=text, parse_mode='HTML', reply_markup=get_menu())
     except: bot.reply_to(message, text, parse_mode='HTML', reply_markup=get_menu())
 
@@ -92,7 +92,7 @@ def handle_menu(call):
         'menu_info': xem_info, 'menu_vongquay': vong_quay, 'menu_diemdanh': diem_danh,
         'menu_profile': xem_profile, 'menu_top': xem_top_3, 'menu_game': menu_game,
         'game_taixiu': game_tai_xiu, 'game_doanso': game_doan_so,
-        'game_buakeobao': game_bua_keo_bao, 'game_dovui': game_do_vui, 'game_latthe': game_lat_the
+        'game_keobuabao': game_bua_keo_bao, 'game_dovui': game_do_vui, 'game_latthe': game_lat_the
     }
     if call.data in actions: actions[call.data](call.message)
 
@@ -258,6 +258,7 @@ def game_check(msg, cost):
     if u[1] < cost: bot.reply_to(msg, f"❌ Bạn cần ít nhất {cost} key!"); return None
     return u
 
+# --- TÀI XỈU & SOI CẦU ---
 @bot.message_handler(commands=['taixiu'])
 def game_tai_xiu(message):
     if not game_check(message, 5): return
@@ -268,16 +269,43 @@ def game_tai_xiu(message):
 def handle_taixiu(call):
     if call.data == 'tx_huy': return bot.edit_message_text("❌ Đã hủy.", call.message.chat.id, call.message.message_id)
     u = get_uname(call)
-    if not u or db_query("SELECT keys FROM ctv WHERE username=?", (u,), fetch='one')[0] < 5: return bot.answer_callback_query(call.id, "Không đủ key!", show_alert=True)
+    if not u: return bot.answer_callback_query(call.id, "Cần Username!", show_alert=True)
+    
     k = db_query("SELECT keys FROM ctv WHERE username=?", (u,), fetch='one')[0]
-    cuoc, d1, d2, d3 = call.data.split('_')[1], random.randint(1,6), random.randint(1,6), random.randint(1,6)
-    tong, ket_qua = d1+d2+d3, 'tai' if d1+d2+d3 >= 11 else 'xiu'
+    if k < 5: return bot.answer_callback_query(call.id, "Không đủ 5 key!", show_alert=True)
+    
+    cuoc = call.data.split('_')[1] 
+    
+    next_tx = db_query("SELECT next_tx FROM ctv WHERE next_tx IS NOT NULL LIMIT 1", fetch='one')
+    if next_tx and next_tx[0]: 
+        ket_qua = next_tx[0] 
+        db_query("UPDATE ctv SET next_tx=NULL WHERE next_tx IS NOT NULL", commit=True) 
+    else:
+        d1, d2, d3 = random.randint(1, 6), random.randint(1, 6), random.randint(1, 6)
+        tong = d1 + d2 + d3
+        ket_qua = 'tai' if tong >= 11 else 'xiu'
+
+    while True:
+        d1, d2, d3 = random.randint(1, 6), random.randint(1, 6), random.randint(1, 6)
+        tong = d1 + d2 + d3
+        if (ket_qua == 'tai' and tong >= 11) or (ket_qua == 'xiu' and tong <= 10): break
+
     new_keys = k + 5 if cuoc == ket_qua else k - 5
     status = "🎉 THẮNG (+5)" if cuoc == ket_qua else "😭 THUA (-5)"
     nr = update_keys(u, new_keys)
+    
     bot.edit_message_text(f"🎲 {d1}-{d2}-{d3} = <b>{tong}</b> ({'TÀI' if ket_qua == 'tai' else 'XỈU'})\n{status}\n🔑 {new_keys} key ({nr})", call.message.chat.id, call.message.message_id, parse_mode='HTML')
     bot.answer_callback_query(call.id)
 
+@bot.message_handler(commands=['soicautx'])
+def soi_cau_tx(message):
+    if not is_admin(message): return bot.reply_to(message, "❌ Chỉ Admin mới được dùng lệnh này!")
+    du_doan = random.choice(['tai', 'xiu'])
+    db_query("UPDATE ctv SET next_tx=? WHERE username=?", (du_doan, get_uname(message)), commit=True)
+    ten = "TÀI (11-18)" if du_doan == 'tai' else "XỈU (3-10)"
+    bot.reply_to(message, f"🔮 <b>SOI CẦU TÀI XỈU</b> 🔮\n\nVán tiếp theo chắc chắn ra: <b>{ten}</b>\n(Độ chính xác 100% - Chỉ Admin thấy)", parse_mode='HTML')
+
+# --- ĐOÁN SỐ ---
 @bot.message_handler(commands=['doanso'])
 def game_doan_so(message):
     if not game_check(message, 2): return
@@ -299,7 +327,8 @@ def handle_doanso(call):
     bot.edit_message_text(f"🔢 Chọn: <b>{chon}</b>\n{status}\n🔑 {new_keys} key ({nr})", call.message.chat.id, call.message.message_id, parse_mode='HTML')
     bot.answer_callback_query(call.id)
 
-@bot.message_handler(commands=['buakeobao'])
+# --- BÚA KÉO BAO ---
+@bot.message_handler(commands=['keobuabao', 'buakeobao'])
 def game_bua_keo_bao(message):
     if not game_check(message, 3): return
     m = InlineKeyboardMarkup().row(InlineKeyboardButton("✊ Búa", callback_data="rps_bua"), InlineKeyboardButton("✌️ Kéo", callback_data="rps_keo"), InlineKeyboardButton("✋ Bao", callback_data="rps_bao"))
@@ -314,43 +343,13 @@ def handle_rps(call):
     p, b = call.data.split('_')[1], random.choice(['bua', 'keo', 'bao'])
     ten = {'bua': '✊ Búa', 'keo': '✌️ Kéo', 'bao': '✋ Bao'}
     if p == b: new_keys, status = k, "🤝 HÒA"
-    elif (p=='bua' and b=='keo') or (p=='keo' and b=='bao') or (p=='bao' and b=='bua'): new_keys, status = k+3, "🎉 THẮNG (+3)"
+        elif (p=='bua' and b=='keo') or (p=='keo' and b=='bao') or (p=='bao' and b=='bua'): new_keys, status = k+3, "🎉 THẮNG (+3)"
     else: new_keys, status = k-3, "😭 THUA (-3)"
     nr = update_keys(u, new_keys)
     bot.edit_message_text(f"Bạn: {ten[p]} | Bot: {ten[b]}\n{status}\n🔑 {new_keys} key ({nr})", call.message.chat.id, call.message.message_id, parse_mode='HTML')
     bot.answer_callback_query(call.id)
 
-DOVUI = [("Con gì càng lớn càng nhỏ?", ["Con cua", "Con rắn", "Con voi"], 0), ("Trái gì ăn sống chua, nấu chín ngọt?", ["Chanh", "Khế", "Me"], 0)]
-@bot.message_handler(commands=['dovui'])
-def game_do_vui(message):
-    if not game_check(message, 2): return
-    q, opts, ans = random.choice(DOVUI)
-    game_data[get_uname(message)] = ans
-    m = InlineKeyboardMarkup()
-    for i, o in enumerate(opts): m.add(InlineKeyboardButton(o, callback_data=f"dv_{i}"))
-    bot.reply_to(message, f"❓ <b>ĐỐ VUI</b>\n{q}\n(Đúng +5, Sai -2)", parse_mode='HTML', reply_markup=m)
-
-@bot.message_handler(commands=['buakeobao'])
-def game_bua_keo_bao(message):
-    if not game_check(message, 3): return
-    m = InlineKeyboardMarkup().row(InlineKeyboardButton("✊ Búa", callback_data="rps_bua"), InlineKeyboardButton("✌️ Kéo", callback_data="rps_keo"), InlineKeyboardButton("✋ Bao", callback_data="rps_bao"))
-    bot.reply_to(message, "✂️ <b>BÚA KÉO BAO</b>\nCược <b>3 key</b>. Chọn:", parse_mode='HTML', reply_markup=m)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('rps_'))
-def handle_rps(call):
-    u = get_uname(call)
-    if not u: return
-    k = db_query("SELECT keys FROM ctv WHERE username=?", (u,), fetch='one')[0]
-    if k < 3: return bot.answer_callback_query(call.id, "Không đủ key!", show_alert=True)
-    p, b = call.data.split('_')[1], random.choice(['bua', 'keo', 'bao'])
-    ten = {'bua': '✊ Búa', 'keo': '✌️ Kéo', 'bao': '✋ Bao'}
-    if p == b: new_keys, status = k, "🤝 HÒA"
-    elif (p=='bua' and b=='keo') or (p=='keo' and b=='bao') or (p=='bao' and b=='bua'): new_keys, status = k+3, "🎉 THẮNG (+3)"
-    else: new_keys, status = k-3, "😭 THUA (-3)"
-    nr = update_keys(u, new_keys)
-    bot.edit_message_text(f"Bạn: {ten[p]} | Bot: {ten[b]}\n{status}\n🔑 {new_keys} key ({nr})", call.message.chat.id, call.message.message_id, parse_mode='HTML')
-    bot.answer_callback_query(call.id)
-
+# --- ĐỐ VUI ---
 DOVUI = [
     ("Con gì càng lớn càng nhỏ?", ["Con cua", "Con rắn", "Con voi"], 0), 
     ("Trái gì ăn sống chua, nấu chín ngọt?", ["Chanh", "Khế", "Me"], 0),
@@ -379,6 +378,7 @@ def handle_dovui(call):
     bot.edit_message_text(f"{'🎉 ĐÚNG (+5)' if chon == ans else '😭 SAI (-2)'}\n🔑 {new_keys} key ({nr})", call.message.chat.id, call.message.message_id, parse_mode='HTML')
     bot.answer_callback_query(call.id)
 
+# --- LẬT THẺ ---
 @bot.message_handler(commands=['latthe'])
 def game_lat_the(message):
     if not game_check(message, 5): return
