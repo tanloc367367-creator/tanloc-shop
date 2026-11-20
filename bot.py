@@ -60,23 +60,24 @@ def send_welcome(msg):
         else: 
             db("INSERT INTO ctv (username, chat_id, keys, xu, rank, join_date) VALUES (?, ?, 0, 0, ?, ?)", (u, msg.chat.id, "Đồng 🥉", get_today()), c=True)
 
-txt = ("Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n"
-       "🛠 <b>Lệnh Admin:</b>\n/themctv /congkey /trukey /congxu /truxu /xoactv /thongke /thongbao /reset\n/soicau [ten_game]\n\n"
-       "🧧 <b>Lì Xì:</b>\n/guilixi - Tạo túi lì xì\n/bulixi [mã] - Nhận lì xì\n\n"
-       "🛡 <b>Quản trị nhóm:</b>\n/kick /camchat /add\n\n"
-       "🎮 <b>Game & Tiện ích:</b>\n/game - Kho game (Dùng Xu)\n/chuyenxu /chuyenkey - Chuyển tiền\n/xinxu /baohiem - Cứu trợ\n/topxu - Đại gia"
-       if is_admin(msg) else 
-       "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n"
-       "👤 <b>Thông tin:</b>\n/vongquay /diemdanh /profile /setquote /khen\n\n"
-       "💸 <b>Giao dịch:</b>\n/chuyenxu /chuyenkey\n\n"
-       "🎁 <b>Cứu trợ:</b>\n/xinxu /baohiem\n\n"
-       "🧧 <b>Lì Xì:</b>\n/bulixi [mã]\n\n"
-       "🎮 <b>Game:</b>\n/game - Kho game (Dùng Xu)\n👉 Cú pháp chơi: /tengame [số xu]")
+    if is_admin(msg):
+        txt = ("Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n"
+               "🛠 <b>Lệnh Admin:</b>\n/themctv /congkey /trukey /congxu /truxu /xoactv /thongke /thongbao /reset\n/soicau [ten_game]\n\n"
+               "🧧 <b>Lì Xì:</b>\n/guilixi - Tạo túi lì xì\n/bulixi [mã] - Nhận lì xì\n\n"
+               "🛡 <b>Quản trị nhóm:</b>\n/kick /camchat /add\n\n"
+               "🎮 <b>Game & Tiện ích:</b>\n/game - Kho game (Dùng Xu)\n/chuyenxu /chuyenkey - Chuyển tiền\n/xinxu /baohiem - Cứu trợ\n/topxu - Đại gia")
+    else:
+        txt = ("Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n"
+               "👤 <b>Thông tin:</b>\n/vongquay /diemdanh /profile /setquote /khen\n\n"
+               "💸 <b>Giao dịch:</b>\n/chuyenxu /chuyenkey\n\n"
+               "🎁 <b>Cứu trợ:</b>\n/xinxu /baohiem\n\n"
+               "🧧 <b>Lì Xì:</b>\n/bulixi [mã]\n\n"
+               "🎮 <b>Game:</b>\n/game - Kho game (Dùng Xu)\n👉 Cú pháp chơi: /tengame [số xu]")
 
-try: 
-    bot.send_photo(msg.chat.id, BANNER_URL, caption=txt, parse_mode='HTML', reply_markup=get_menu())
-except: 
-    bot.reply_to(msg, txt, parse_mode='HTML', reply_markup=get_menu())
+    try: 
+        bot.send_photo(msg.chat.id, BANNER_URL, caption=txt, parse_mode='HTML', reply_markup=get_menu())
+    except: 
+        bot.reply_to(msg, txt, parse_mode='HTML', reply_markup=get_menu())
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('menu_'))
 def handle_menu(call):
