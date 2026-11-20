@@ -8,8 +8,8 @@ from flask import Flask, request
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # ================= CẤU HÌNH =================
-BOT_TOKEN = 'DÁN_TOKEN_CỦA_BẠN_VÀO_ĐÂY'
-ADMIN_ID = 123456789 # SỬA THÀNH ID CỦA BẠN
+BOT_TOKEN = '9268542841:AAHJvJtXD7oXLfTlNeUyaSanWH5yni12DhQ'
+ADMIN_ID = 8240363472 # SỬA THÀNH ID CỦA BẠN
 BANNER_URL = 'https://i.postimg.cc/G3P8qX0G/file-000000005d588209b919bcce17087b9f.png'
 # ============================================
 
