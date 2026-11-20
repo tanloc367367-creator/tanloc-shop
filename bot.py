@@ -523,4 +523,24 @@ def cong_key(message):
 
 @bot.message_handler(commands=['trukey'])
 def tru_key(message):
+if not is_admin(message): return
+try:
+    parts = message.text.split()
+    username = parts[1]
+    minus_keys = int(parts[2])
     
+    conn = sqlite3.connect('ctv_data.db')
+    c = conn.cursor()
+    c.execute("SELECT keys FROM ctv WHERE username=?", (username,))
+    data = c.fetchone()
+    
+    if data:
+        current_keys = data[0]
+        new_keys = max(0, current_keys - minus_keys) 
+        new_rank = update_keys(username, new_keys)
+        bot.reply_to(message, f"✅ Đã trừ {minus_keys} key của {username}.\nTổng: {new_keys} key\nCấp bậc: {new_rank}")
+    else:
+        bot.reply_to(message, f"❌ Không tìm thấy {username}.")
+    conn.close()
+except Exception:
+    bot.reply_to(message, "❌ Sai cú pháp! Dùng: /trukey @ten 5")    
