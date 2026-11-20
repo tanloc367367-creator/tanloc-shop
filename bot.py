@@ -11,7 +11,7 @@ GAME_BANNER_URL = 'https://i.postimg.cc/nztdrLpQ/file-0000000089dc8211b7bef528f2
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 game_data = {} 
-temp_lixi_data = {} # Lưu tạm thời gian tạo lì xì
+temp_lixi_data = {} 
 
 def get_today(): return datetime.now().strftime("%Y-%m-%d")
 def is_admin(msg): return msg.from_user.id == ADMIN_ID
@@ -34,8 +34,8 @@ def db_query(query, params=(), fetch=False, commit=False):
     return res
 
 # Khởi tạo DB
-db_query('''CREATE TABLE IF NOT EXISTS ctv (username TEXT PRIMARY KEY, chat_id INTEGER, keys INTEGER, xu INTEGER DEFAULT 0, rank TEXT, join_date TEXT, quote TEXT, last_checkin TEXT, streak INTEGER, last_wheel TEXT, kudos INTEGER)''')
-for col in ["chat_id INTEGER", "join_date TEXT", "quote TEXT", "last_checkin TEXT", "streak INTEGER DEFAULT 0", "last_wheel TEXT", "kudos INTEGER DEFAULT 0", "next_tx TEXT", "xu INTEGER DEFAULT 0", "next_doanso TEXT", "next_rps TEXT", "next_dovui TEXT", "next_latthe TEXT"]:
+db_query('''CREATE TABLE IF NOT EXISTS ctv (username TEXT PRIMARY KEY, chat_id INTEGER, keys INTEGER, xu INTEGER DEFAULT 0, rank TEXT, join_date TEXT, quote TEXT, last_checkin TEXT, streak INTEGER, last_wheel TEXT, kudos INTEGER, last_xinxu TEXT, last_baohiem TEXT)''')
+for col in ["chat_id INTEGER", "join_date TEXT", "quote TEXT", "last_checkin TEXT", "streak INTEGER DEFAULT 0", "last_wheel TEXT", "kudos INTEGER DEFAULT 0", "next_tx TEXT", "xu INTEGER DEFAULT 0", "next_doanso TEXT", "next_rps TEXT", "next_dovui TEXT", "next_latthe TEXT", "last_xinxu TEXT", "last_baohiem TEXT"]:
     try: db_query(f"ALTER TABLE ctv ADD COLUMN {col}", commit=True)
     except: pass
 
@@ -62,11 +62,11 @@ def check_user(msg):
 # ================= MENU =================
 def get_menu():
     m = InlineKeyboardMarkup()
-    m.row(InlineKeyboardButton("🏆 Xếp Hạng", callback_data="menu_xephang"), InlineKeyboardButton("📊 Cấp Bậc", callback_data="menu_capbac"))
-    m.row(InlineKeyboardButton("🎯 Nhiệm Vụ", callback_data="menu_nhiemvu"), InlineKeyboardButton("👤 Thông Tin", callback_data="menu_info"))
+    m.row(InlineKeyboardButton("🏆 Xếp Hạng Key", callback_data="menu_xephang"), InlineKeyboardButton("💰 Top Đại Gia", callback_data="menu_topxu"))
+    m.row(InlineKeyboardButton("📊 Cấp Bậc", callback_data="menu_capbac"), InlineKeyboardButton("👤 Thông Tin", callback_data="menu_info"))
     m.row(InlineKeyboardButton("🎲 Vòng Quay", callback_data="menu_vongquay"), InlineKeyboardButton("📅 Điểm Danh", callback_data="menu_diemdanh"))
     m.row(InlineKeyboardButton("🎮 GAME GIẢI TRÍ", callback_data="menu_game"))
-    m.row(InlineKeyboardButton("💳 Hồ Sơ", callback_data="menu_profile"), InlineKeyboardButton("🔥 Top 3", callback_data="menu_top"))
+    m.row(InlineKeyboardButton("💳 Hồ Sơ", callback_data="menu_profile"), InlineKeyboardButton("🎯 Nhiệm Vụ", callback_data="menu_nhiemvu"))
     return m
 
 def get_game_menu():
@@ -87,17 +87,18 @@ def send_welcome(message):
         else:
             db_query("INSERT INTO ctv (username, chat_id, keys, xu, rank, join_date) VALUES (?, ?, 0, 0, ?, ?)", (uname, message.chat.id, "Đồng 🥉", get_today()), commit=True)
 
-    text = ("Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv /congkey /trukey /congxu /truxu /xoactv /thongke /thongbao /reset\n/soicau [ten_game]\n\n🧧 Lì Xì:\n/guilixi - Tạo túi lì xì\n/bulixi [mã] - Nhận lì xì\n\n🛡 Quản trị nhóm:\n/kick /camchat /add\n\n🎮 Gõ /game để xem các game giải trí (Dùng Xu)!" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay /diemdanh /profile /setquote /khen\n🧧 /bulixi [mã] - Nhận lì xì\n/game - Kho game giải trí\n👉 Cú pháp chơi game: /tengame [số xu]")
+    text = ("Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv /congkey /trukey /congxu /truxu /xoactv /thongke /thongbao /reset\n/soicau [ten_game]\n\n🧧 Lì Xì:\n/guilixi - Tạo túi lì xì\n/bulixi [mã] - Nhận lì xì\n\n🛡 Quản trị nhóm:\n/kick /camchat /add\n\n🎮 Gõ /game để xem các game giải trí (Dùng Xu)!" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay /diemdanh /profile /setquote /khen\n💸 /chuyenxu /chuyenkey - Chuyển tiền\n🎁 /xinxu /baohiem - Cứu trợ\n🧧 /bulixi [mã] - Nhận lì xì\n/game - Kho game giải trí\n👉 Cú pháp chơi game: /tengame [số xu]")
     try: bot.send_photo(message.chat.id, BANNER_URL, caption=text, parse_mode='HTML', reply_markup=get_menu())
     except: bot.reply_to(message, text, parse_mode='HTML', reply_markup=get_menu())
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('menu_') or call.data.startswith('game_'))
+@bot.callback_query_handler(func=lambda call: call.data.startswith('menu_'))
 def handle_menu(call):
     bot.answer_callback_query(call.id)
     actions = {
         'menu_xephang': xep_hang, 'menu_capbac': xem_cap_bac, 'menu_nhiemvu': nhiem_vu,
         'menu_info': xem_info, 'menu_vongquay': vong_quay, 'menu_diemdanh': diem_danh,
-        'menu_profile': xem_profile, 'menu_top': xem_top_3, 'menu_game': menu_game
+        'menu_profile': xem_profile, 'menu_top': xem_top_3, 'menu_game': menu_game,
+        'menu_topxu': top_dai_gia
     }
     if call.data in actions: actions[call.data](call.message)
 
@@ -114,129 +115,125 @@ def menu_game(message):
     try: bot.send_photo(message.chat.id, GAME_BANNER_URL, caption=text, parse_mode='HTML', reply_markup=get_game_menu())
     except: bot.reply_to(message, text, parse_mode='HTML', reply_markup=get_game_menu())
 
-# ================= TÍNH NĂNG LÌ XÌ =================
-@bot.message_handler(commands=['guilixi'])
-def gui_lixi(message):
-    parts = message.text.split()
-    if len(parts) == 1:
-        temp_lixi_data[message.from_user.id] = {'step': 1, 'loai': '', 'tong': 0, 'so_nguoi': 0}
-        m = InlineKeyboardMarkup().row(InlineKeyboardButton("🔑 Key", callback_data="lixi_loai_key"), InlineKeyboardButton("🪙 Xu", callback_data="lixi_loai_xu"))
-        return bot.reply_to(message, "🧧 <b>TẠO TÚI LÌ XÌ</b> 🧧\nBước 1: Chọn loại lì xì bạn muốn gửi:", parse_mode='HTML', reply_markup=m)
-    return bot.reply_to(message, "❌ Sai cú pháp. Hãy gõ /guilixi để tạo túi lì xì.")
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('lixi_loai_'))
-def lixi_chon_loai(call):
-    loai = call.data.split('_')[2]
-    temp_lixi_data[call.from_user.id] = {'step': 2, 'loai': loai, 'tong': 0, 'so_nguoi': 0}
-    bot.edit_message_text(f"🧧 Bạn chọn gửi lì xì bằng <b>{loai.upper()}</b>.\nBước 2: Nhập tổng số {loai} bạn muốn gửi.\n(Cú pháp: <code>/tongsố</code>. VD: <code>/100</code>)", call.message.chat.id, call.message.message_id, parse_mode='HTML')
-    bot.answer_callback_query(call.id)
-
-@bot.message_handler(func=lambda message: message.from_user.id in temp_lixi_data and message.text.startswith('/'))
-def lixi_nhap_so(message):
-    state = temp_lixi_data[message.from_user.id]
-    text = message.text.replace('/', '').strip()
-    
-    if not text.isdigit():
-        return bot.reply_to(message, "❌ Vui lòng nhập số hợp lệ (VD: /100).")
-    
-    val = int(text)
+# ================= TÍNH NĂNG CHUYỂN TIỀN =================
+@bot.message_handler(commands=['chuyenxu', 'chuyenkey'])
+def chuyen_tien(message):
     u = check_user(message)
     if not u: return
-
-    if state['step'] == 2:
-        balance = u[1] if state['loai'] == 'key' else u[2]
-        if balance < val: return bot.reply_to(message, f"❌ Bạn không đủ {state['loai']}! (Bạn có {balance}).")
-        state['tong'] = val
-        state['step'] = 3
-        bot.reply_to(message, f"✅ Tổng {state['loai']}: <b>{val}</b>.\nBước 3: Nhập số người có thể nhận lì xì này.\n(Cú pháp: <code>/số_người</code>. VD: <code>/5</code>)", parse_mode='HTML')
-        
-    elif state['step'] == 3:
-        if val <= 0 or val > 100: return bot.reply_to(message, "❌ Số người phải từ 1 đến 100.")
-        state['so_nguoi'] = val
-        
-        # Tạo mã code
-        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        
-        # Trừ tiền người gửi
-        uname = u[0]
-        if state['loai'] == 'key':
-            db_query("UPDATE ctv SET keys = keys - ? WHERE username=?", (state['tong'], uname), commit=True)
-        else:
-            db_query("UPDATE ctv SET xu = xu - ? WHERE username=?", (state['tong'], uname), commit=True)
-            
-        # Lưu vào DB
-        db_query("INSERT INTO lixi (code, creator, loai, tong_gia_tri, con_lai, so_nguoi) VALUES (?, ?, ?, ?, ?, ?)", 
-                 (code, uname, state['loai'], state['tong'], state['tong'], state['so_nguoi']), commit=True)
-        
-        del temp_lixi_data[message.from_user.id]
-        
-        text = (f"🧧 <b>TẠO TÚI LÌ XÌ THÀNH CÔNG!</b> 🧧\n\n"
-                f"👤 Người gửi: {uname}\n"
-                f"🎁 Loại: {state['loai'].upper()} (Tổng: {state['tong']})\n"
-                f"👥 Số người có thể nhận: <b>{state['so_nguoi']}</b> người.\n\n"
-                f"👉 Nhập lệnh <code>/bulixi {code}</code> để nhận.\n"
-                f"(Nhanh tay lên, khi đủ {state['so_nguoi']} người nhận túi sẽ tự đóng lại!)")
-        bot.reply_to(message, text, parse_mode='HTML')
-
-@bot.message_handler(commands=['bulixi'])
-def nhan_lixi(message):
-    parts = message.text.split()
-    if len(parts) < 2: return bot.reply_to(message, "❌ Cú pháp: /bulixi [mã_code]\nVí dụ: /bulixi ABC123")
-    code = parts[1].upper()
+    sender, sender_keys, sender_xu = u
     
+    parts = message.text.split()
+    if len(parts) < 3: return bot.reply_to(message, f"❌ Cú pháp: /{parts[0][1:]} @ten_nguoi_nhan so_luong")
+    
+    target, amount = parts[1], parts[2]
+    if not amount.isdigit(): return bot.reply_to(message, "❌ Số lượng phải là số nguyên dương!")
+    amount = int(amount)
+    if amount <= 0: return bot.reply_to(message, "❌ Số lượng phải lớn hơn 0!")
+    if target == sender: return bot.reply_to(message, "🤦 Không thể tự chuyển cho mình!")
+    
+    receiver = db_query("SELECT username FROM ctv WHERE username=?", (target,), fetch='one')
+    if not receiver: return bot.reply_to(message, f"❌ Không tìm thấy người dùng {target}!")
+    
+    is_key = 'key' in parts[0]
+    loai = "Key" if is_key else "Xu"
+    icon = "🔑" if is_key else "🪙"
+    
+    if is_key:
+        if sender_keys < amount: return bot.reply_to(message, f"❌ Bạn không đủ Key! (Bạn có {sender_keys})")
+        update_keys(sender, sender_keys - amount)
+        old_r = db_query("SELECT keys FROM ctv WHERE username=?", (target,), fetch='one')[0]
+        update_keys(target, old_r + amount)
+        sender_after, receiver_after = sender_keys - amount, old_r + amount
+    else:
+        if sender_xu < amount: return bot.reply_to(message, f"❌ Bạn không đủ Xu! (Bạn có {sender_xu})")
+        update_xu(sender, -amount)
+        old_r = db_query("SELECT xu FROM ctv WHERE username=?", (target,), fetch='one')[0]
+        update_xu(target, amount)
+        sender_after, receiver_after = sender_xu - amount, old_r + amount
+
+    text = (f"💸 <b>{sender}</b> ĐÃ CHUYỂN CHO <b>{target}</b> 💸\n\n"
+            f"📉 <b>SỐ DƯ BIẾN ĐỘNG:</b>\n"
+            f"👤 {sender}: {sender_keys if is_key else sender_xu} {icon} ➡️ {sender_after} {icon}\n"
+            f"👤 {target}: {old_r} {icon} ➡️ {receiver_after} {icon}\n\n"
+            f"🪎 <b>CHUYỂN THÀNH CÔNG!</b>")
+    bot.reply_to(message, text, parse_mode='HTML')
+
+# ================= TÍNH NĂNG CỨU TRỢ =================
+@bot.message_handler(commands=['xinxu'])
+def xin_xu(message):
     u = check_user(message)
     if not u: return
     uname = u[0]
     
-    li = db_query("SELECT * FROM lixi WHERE code=?", (code,), fetch='one')
-    if not li: return bot.reply_to(message, "❌ Mã lì xì không tồn tại hoặc đã bị xóa!")
-    if li[7] == 'closed': return bot.reply_to(message, "🧧 Túi lì xì này đã được bốc hết rồi (Hết lượt hoặc hết tiền)!")
+    last_xin = db_query("SELECT last_xinxu FROM ctv WHERE username=?", (uname,), fetch='one')[0]
+    if last_xin == get_today(): return bot.reply_to(message, "⏳ Hôm nay bạn đã xin xu rồi! Mai quay lại nhé.")
     
-    # Kiểm tra xem người dùng đã nhận chưa (Dùng bảng tạm hoặc check log)
-    # Để đơn giản, ta cho phép nhận 1 lần. Nếu muốn chặn, cần thêm bảng log. 
-    # Ở đây tạm thời cứ cho nhận (nếu muốn chặn phải thêm cột last_lixi).
-    
-    loai, tong, con_lai, so_nguoi, da_nhan = li[2], li[3], li[4], li[5], li[6]
-    
-    if da_nhan >= so_nguoi:
-        db_query("UPDATE lixi SET status='closed' WHERE code=?", (code,), commit=True)
-        return bot.reply_to(message, "🧧 Túi lì xì này đã hết lượt nhận!")
-        
-    # Tính số tiền ngẫu nhiên
-    nguoi_con_lai = so_nguoi - da_nhan
-    if nguoi_con_lai == 1:
-        nhan_duoc = con_lai
-    else:
-        # Random từ 10% đến 50% số tiền còn lại
-        nhan_duoc = random.randint(int(con_lai * 0.1), int(con_lai * 0.5))
-        if nhan_duoc >= con_lai: nhan_duoc = con_lai - 1
-    
-    if nhan_duoc < 1: nhan_duoc = 1 # Ít nhất 1
-    
-    # Cập nhật DB
-    con_lai_moi = con_lai - nhan_duoc
-    da_nhan_moi = da_nhan + 1
-    status = 'closed' if da_nhan_moi >= so_nguoi or con_lai_moi <= 0 else 'active'
-    
-    db_query("UPDATE lixi SET con_lai=?, da_nhan=?, status=? WHERE code=?", (con_lai_moi, da_nhan_moi, status, code), commit=True)
-    
-    # Cộng tiền cho người nhận
-    if loai == 'key':
-        k = db_query("SELECT keys FROM ctv WHERE username=?", (uname,), fetch='one')[0]
-        update_keys(uname, k + nhan_duoc)
-    else:
-        update_xu(uname, nhan_duoc)
-        
-    bot.reply_to(message, f"🧧 <b>CHÚC MỪNG!</b> 🧧\nBạn đã nhận được <b>{nhan_duoc} {loai.upper()}</b> từ túi lì xì của {li[1]}.\n\n⏳ Trạng thái túi: Còn {so_nguoi - da_nhan_moi} lượt nhận.", parse_mode='HTML')
-    
-    if status == 'closed':
-        bot.send_message(message.chat.id, f"🎊 <b>TÚI LÌ XÌ {code} ĐÃ ĐƯỢC BỐC HẾT!</b>\nCảm ơn <b>{li[1]}</b> đã gửi tặng {tong} {loai} cho mọi người!", parse_mode='HTML')
+    amount = random.randint(1, 200)
+    update_xu(uname, amount)
+    db_query("UPDATE ctv SET last_xinxu=? WHERE username=?", (get_today(), uname), commit=True)
+    bot.reply_to(message, f"🎁 Bạn đã xin được <b>{amount} xu</b> từ hệ thống!\nHãy chăm chỉ chơi game để kiếm thêm nhé.", parse_mode='HTML')
 
-# ================= LỆNH TÍNH NĂNG (Xếp hạng, Info, ...) =================
+@bot.message_handler(commands=['baohiem'])
+def bao_hiem(message):
+    u = check_user(message)
+    if not u: return
+    uname, k, x = u
+    
+    last_bh = db_query("SELECT last_baohiem FROM ctv WHERE username=?", (uname,), fetch='one')[0]
+    if last_bh == get_today(): return bot.reply_to(message, "⏳ Hôm nay bạn đã nhận bảo hiểm rồi! Mai quay lại nhé.")
+    
+    if x >= 100: return bot.reply_to(message, f"❌ Bạn đang có {x} xu (trên 100), không đủ điều kiện nhận bảo hiểm!")
+    
+    amount = 100
+    update_xu(uname, amount)
+    db_query("UPDATE ctv SET last_baohiem=? WHERE username=?", (get_today(), uname), commit=True)
+    bot.reply_to(message, f"🛡 Bạn đã nhận được <b>{amount} xu</b> bảo hiểm. Hãy chơi game thông minh hơn nhé!", parse_mode='HTML')
+
+# ================= TÍNH NĂNG VÒNG QUAY NÂNG CẤP =================
+@bot.message_handler(commands=['vongquay'])
+def vong_quay(message):
+    u = check_user(message)
+    if not u: return
+    uname, k, x = u
+    parts = message.text.split()
+    
+    if len(parts) == 1:
+        # Vòng quay free 1 lần/ngày
+        lw = db_query("SELECT last_wheel FROM ctv WHERE username=?", (uname,), fetch='one')[0]
+        if lw == get_today(): return bot.reply_to(message, "⏳ Hôm nay bạn đã quay miễn phí rồi!\n👉 Nếu muốn quay tiếp, hãy cược xu: /vongquay [số xu]")
+        
+        won = random.choices([0, 1, 1, 3, 5], weights=[40, 30, 15, 10, 5], k=1)[0]
+        update_xu(uname, won)
+        db_query("UPDATE ctv SET last_wheel=? WHERE username=?", (get_today(), uname), commit=True)
+        bot.reply_to(message, f"🎲 <b>VÒNG QUAY MIỄN PHÍ</b>\nKết quả: <b>{won} xu</b>!\nTổng: {x+won} xu", parse_mode='HTML')
+    else:
+        # Vòng quay cược xu
+        try: cost = int(parts[1])
+        except: return bot.reply_to(message, "❌ Số xu cược không hợp lệ!")
+        if cost < 10: return bot.reply_to(message, "❌ Cược tối thiểu là 10 xu!")
+        if x < cost: return bot.reply_to(message, f"❌ Bạn không đủ {cost} xu! (Bạn có {x} xu)")
+        
+        multiplier = random.choices([0, 1.5, 2, 5], weights=[50, 25, 20, 5], k=1)[0]
+        won = int(cost * multiplier)
+        update_xu(uname, won - cost)
+        
+        if multiplier == 0:
+            bot.reply_to(message, f"🎲 <b>VÒNG QUAY MAY MẮN</b>\nBạn cược {cost} xu.\nKết quả: <b>TRƯỢT (Mất {cost} xu)</b>\nTổng: {x - cost} xu", parse_mode='HTML')
+        else:
+            bot.reply_to(message, f"🎲 <b>VÒNG QUAY MAY MẮN</b>\nBạn cược {cost} xu.\nKết quả: Hệ số <b>x{multiplier}</b>!\nThắng nhận: <b>{won} xu</b>.\nTổng: {x - cost + won} xu", parse_mode='HTML')
+
+# ================= LỆNH TÍNH NĂNG KHÁC =================
 @bot.message_handler(commands=['xephang'])
 def xep_hang(message):
     users = db_query("SELECT username, keys, xu, rank FROM ctv ORDER BY keys DESC", fetch='all')
-    text = "🏆 <b>BẢNG XẾP HẠNG (THEO KEY)</b> 🏆\n\n" + "".join([f"{i}. {u[0]} | {u[3]} | {u[1]} key | {u[2]} xu\n" for i, u in enumerate(users, 1)]) if users else "📭 Chưa có CTV nào!"
+    text = "🏆 <b>BẢNG XẾP HẠNG (THEO KEY)</b> 🏆\n\n" + "".join([f"{i}. {u[0]} | {u[3]} | {u[1]} key\n" for i, u in enumerate(users, 1)]) if users else "📭 Chưa có CTV nào!"
+    bot.reply_to(message, text, parse_mode='HTML')
+
+@bot.message_handler(commands=['topxu'])
+def top_dai_gia(message):
+    users = db_query("SELECT username, xu FROM ctv ORDER BY xu DESC LIMIT 5", fetch='all')
+    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+    text = "💰 <b>TOP 5 ĐẠI GIA (XU)</b> 💰\n\n" + "".join([f"{medals[i]} {u[0]}: <b>{u[1]} xu</b>\n" for i, u in enumerate(users)]) if users else "📭 Chưa có ai có xu!"
     bot.reply_to(message, text, parse_mode='HTML')
 
 @bot.message_handler(commands=['capbac'])
@@ -286,18 +283,6 @@ def set_quote(message):
     if not txt or len(txt) > 50: return bot.reply_to(message, "❌ Châm ngôn phải từ 1-50 ký tự!")
     db_query("UPDATE ctv SET quote=? WHERE username=?", (txt, u), commit=True)
     bot.reply_to(message, f"✅ Đã đổi châm ngôn: <i>\"{txt}\"</i>", parse_mode='HTML')
-
-@bot.message_handler(commands=['vongquay'])
-def vong_quay(message):
-    u = check_user(message)
-    if not u: return
-    uname, k, x = u
-    lw = db_query("SELECT last_wheel FROM ctv WHERE username=?", (uname,), fetch='one')[0]
-    if lw == get_today(): return bot.reply_to(message, "⏳ Mai quay lại nhé!")
-    won = random.choices([0, 1, 1, 3, 5], weights=[40, 30, 15, 10, 5], k=1)[0]
-    update_xu(uname, won)
-    db_query("UPDATE ctv SET last_wheel=? WHERE username=?", (get_today(), uname), commit=True)
-    bot.reply_to(message, f"🎲 Kết quả: <b>{won} xu</b>!\nTổng: {x+won} xu", parse_mode='HTML')
 
 @bot.message_handler(commands=['diemdanh'])
 def diem_danh(message):
@@ -425,6 +410,101 @@ def soi_cau_all(message):
     db_query(f"UPDATE ctv SET {column}=? WHERE username=?", (du_doan, get_uname(message)), commit=True)
     bot.reply_to(message, f"🔮 <b>SOI CẦU {game.upper()}</b> 🔮\n\nVán tiếp theo chắc chắn ra: <b>{ten_hien_thi}</b>\n(Độ chính xác 100% - Chỉ Admin thấy)", parse_mode='HTML')
 
+# ================= TÍNH NĂNG LÌ XÌ =================
+@bot.message_handler(commands=['guilixi'])
+def gui_lixi(message):
+    parts = message.text.split()
+    if len(parts) == 1:
+        temp_lixi_data[message.from_user.id] = {'step': 1, 'loai': '', 'tong': 0, 'so_nguoi': 0}
+        m = InlineKeyboardMarkup().row(InlineKeyboardButton("🔑 Key", callback_data="lixi_loai_key"), InlineKeyboardButton("🪙 Xu", callback_data="lixi_loai_xu"))
+        return bot.reply_to(message, "🧧 <b>TẠO TÚI LÌ XÌ</b> 🧧\nBước 1: Chọn loại lì xì bạn muốn gửi:", parse_mode='HTML', reply_markup=m)
+    return bot.reply_to(message, "❌ Sai cú pháp. Hãy gõ /guilixi để tạo túi lì xì.")
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('lixi_loai_'))
+def lixi_chon_loai(call):
+    loai = call.data.split('_')[2]
+    temp_lixi_data[call.from_user.id] = {'step': 2, 'loai': loai, 'tong': 0, 'so_nguoi': 0}
+    bot.edit_message_text(f"🧧 Bạn chọn gửi lì xì bằng <b>{loai.upper()}</b>.\nBước 2: Nhập tổng số {loai} bạn muốn gửi.\n(Cú pháp: <code>/tongsố</code>. VD: <code>/100</code>)", call.message.chat.id, call.message.message_id, parse_mode='HTML')
+    bot.answer_callback_query(call.id)
+
+@bot.message_handler(func=lambda message: message.from_user.id in temp_lixi_data and message.text.startswith('/'))
+def lixi_nhap_so(message):
+    state = temp_lixi_data[message.from_user.id]
+    text = message.text.replace('/', '').strip()
+    
+    if not text.isdigit(): return bot.reply_to(message, "❌ Vui lòng nhập số hợp lệ (VD: /100).")
+    val = int(text)
+    u = check_user(message)
+    if not u: return
+
+    if state['step'] == 2:
+        balance = u[1] if state['loai'] == 'key' else u[2]
+        if balance < val: return bot.reply_to(message, f"❌ Bạn không đủ {state['loai']}! (Bạn có {balance}).")
+        state['tong'] = val
+        state['step'] = 3
+        bot.reply_to(message, f"✅ Tổng {state['loai']}: <b>{val}</b>.\nBước 3: Nhập số người có thể nhận lì xì này.\n(Cú pháp: <code>/số_người</code>. VD: <code>/5</code>)", parse_mode='HTML')
+        
+    elif state['step'] == 3:
+        if val <= 0 or val > 100: return bot.reply_to(message, "❌ Số người phải từ 1 đến 100.")
+        state['so_nguoi'] = val
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        uname = u[0]
+        
+        if state['loai'] == 'key': db_query("UPDATE ctv SET keys = keys - ? WHERE username=?", (state['tong'], uname), commit=True)
+        else: db_query("UPDATE ctv SET xu = xu - ? WHERE username=?", (state['tong'], uname), commit=True)
+            
+        db_query("INSERT INTO lixi (code, creator, loai, tong_gia_tri, con_lai, so_nguoi) VALUES (?, ?, ?, ?, ?, ?)", 
+                 (code, uname, state['loai'], state['tong'], state['tong'], state['so_nguoi']), commit=True)
+        del temp_lixi_data[message.from_user.id]
+        
+        text = (f"🧧 <b>TẠO TÚI LÌ XÌ THÀNH CÔNG!</b> 🧧\n\n"
+                f"👤 Người gửi: {uname}\n"
+                f"🎁 Loại: {state['loai'].upper()} (Tổng: {state['tong']})\n"
+                f"👥 Số người có thể nhận: <b>{state['so_nguoi']}</b> người.\n\n"
+                f"👉 Nhập lệnh <code>/bulixi {code}</code> để nhận.\n"
+                f"(Nhanh tay lên, khi đủ {state['so_nguoi']} người nhận túi sẽ tự đóng lại!)")
+        bot.reply_to(message, text, parse_mode='HTML')
+
+@bot.message_handler(commands=['bulixi'])
+def nhan_lixi(message):
+    parts = message.text.split()
+    if len(parts) < 2: return bot.reply_to(message, "❌ Cú pháp: /bulixi [mã_code]\nVí dụ: /bulixi ABC123")
+    code = parts[1].upper()
+    u = check_user(message)
+    if not u: return
+    uname = u[0]
+    
+    li = db_query("SELECT * FROM lixi WHERE code=?", (code,), fetch='one')
+    if not li: return bot.reply_to(message, "❌ Mã lì xì không tồn tại hoặc đã bị xóa!")
+    if li[7] == 'closed': return bot.reply_to(message, "🧧 Túi lì xì này đã được bốc hết rồi (Hết lượt hoặc hết tiền)!")
+    
+    loai, tong, con_lai, so_nguoi, da_nhan = li[2], li[3], li[4], li[5], li[6]
+    if da_nhan >= so_nguoi:
+        db_query("UPDATE lixi SET status='closed' WHERE code=?", (code,), commit=True)
+        return bot.reply_to(message, "🧧 Túi lì xì này đã hết lượt nhận!")
+        
+    nguoi_con_lai = so_nguoi - da_nhan
+    if nguoi_con_lai == 1: nhan_duoc = con_lai
+    else:
+        nhan_duoc = random.randint(int(con_lai * 0.1), int(con_lai * 0.5))
+        if nhan_duoc >= con_lai: nhan_duoc = con_lai - 1
+    if nhan_duoc < 1: nhan_duoc = 1 
+    
+    con_lai_moi = con_lai - nhan_duoc
+    da_nhan_moi = da_nhan + 1
+    status = 'closed' if da_nhan_moi >= so_nguoi or con_lai_moi <= 0 else 'active'
+    
+    db_query("UPDATE lixi SET con_lai=?, da_nhan=?, status=? WHERE code=?", (con_lai_moi, da_nhan_moi, status, code), commit=True)
+    
+    if loai == 'key':
+        k = db_query("SELECT keys FROM ctv WHERE username=?", (uname,), fetch='one')[0]
+        update_keys(uname, k + nhan_duoc)
+    else: update_xu(uname, nhan_duoc)
+        
+    bot.reply_to(message, f"🧧 <b>CHÚC MỪNG!</b> 🧧\nBạn đã nhận được <b>{nhan_duoc} {loai.upper()}</b> từ túi lì xì của {li[1]}.\n\n⏳ Trạng thái túi: Còn {so_nguoi - da_nhan_moi} lượt nhận.", parse_mode='HTML')
+    
+    if status == 'closed':
+        bot.send_message(message.chat.id, f"🎊 <b>TÚI LÌ XÌ {code} ĐÃ ĐƯỢC BỐC HẾT!</b>\nCảm ơn <b>{li[1]}</b> đã gửi tặng {tong} {loai} cho mọi người!", parse_mode='HTML')
 
 # ================= KHU VỰC GAME (DÙNG XU TỰ CHỌN) =================
 DOVUI = [
@@ -459,7 +539,7 @@ def game_check(msg, args, min_cost):
 @bot.message_handler(commands=['taixiu'])
 def game_tai_xiu(message):
     args = message.text.split()
-    res = game_check(message, args, 5) # Mức cược tối thiểu là 5
+    res = game_check(message, args, 5) 
     if not res: return
     uname, k, x, cost = res
     
@@ -501,7 +581,7 @@ def handle_taixiu(call):
 @bot.message_handler(commands=['doanso'])
 def game_doan_so(message):
     args = message.text.split()
-    res = game_check(message, args, 2) # Mức cược tối thiểu là 2
+    res = game_check(message, args, 2) 
     if not res: return
     uname, k, x, cost = res
     
@@ -539,7 +619,7 @@ def handle_doanso(call):
 @bot.message_handler(commands=['keobuabao', 'buakeobao'])
 def game_bua_keo_bao(message):
     args = message.text.split()
-    res = game_check(message, args, 3) # Mức cược tối thiểu là 3
+    res = game_check(message, args, 3) 
     if not res: return
     uname, k, x, cost = res
     
@@ -584,7 +664,7 @@ def handle_rps(call):
 @bot.message_handler(commands=['dovui'])
 def game_do_vui(message):
     args = message.text.split()
-    res = game_check(message, args, 2) # Mức cược tối thiểu là 2
+    res = game_check(message, args, 2) 
     if not res: return
     uname, k, x, cost = res
     
@@ -622,7 +702,7 @@ def handle_dovui(call):
 @bot.message_handler(commands=['latthe'])
 def game_lat_the(message):
     args = message.text.split()
-    res = game_check(message, args, 5) # Mức cược tối thiểu là 5
+    res = game_check(message, args, 5) 
     if not res: return
     uname, k, x, cost = res
     
@@ -676,42 +756,4 @@ def handle_latthe(call):
             bot.edit_message_text(f"🏆 <b>XUẤT SẮC!</b> (+{thuong} xu và thưởng {bonus} xu)\n🪙 {x + thuong + bonus} xu", call.message.chat.id, call.message.message_id, parse_mode='HTML')
         else:
             bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=m)
-            bot.answer_callback_query(call.id, f"💎 An toàn! +{thuong} xu (Tổng: {x + thuong})")
-    bot.answer_callback_query(call.id)
-
-# ================= QUẢN TRỊ NHÓM & WEBHOOK =================
-@bot.message_handler(commands=['kick', 'camchat', 'add'])
-def group_admin(message):
-    if not is_admin(message): return
-    cmd = message.text.split()[0].replace('/', '')
-    if cmd == 'add':
-        try: bot.reply_to(message, f"🔗 Link mời:\n{bot.create_chat_invite_link(message.chat.id, member_limit=1).invite_link}")
-        except Exception as e: bot.reply_to(message, f"❌ Lỗi: {e}")
-        return
-    if not message.reply_to_message: return bot.reply_to(message, f"❌ Reply tin nhắn người đó và gõ /{cmd}")
-    try:
-        if cmd == 'kick':
-            bot.kick_chat_member(message.chat.id, message.reply_to_message.from_user.id)
-            bot.reply_to(message, "👢 Đã đuổi!")
-        elif cmd == 'camchat':
-            parts = message.text.split()
-            if len(parts) < 2: return bot.reply_to(message, "❌ Thiếu thời gian (VD: 1h)")
-            unit, val = parts[1][-1].lower(), int(parts[1][:-1])
-            secs = val * {'m': 60, 'h': 3600, 'd': 86400}.get(unit, 60)
-            bot.restrict_chat_member(message.chat.id, message.reply_to_message.from_user.id, ChatPermissions(can_send_messages=False), until_date=int(time.time()) + secs)
-            bot.reply_to(message, f"🤐 Đã cấm chat {parts[1]}!")
-    except Exception as e: bot.reply_to(message, f"❌ Lỗi: {e}")
-
-@app.route('/' + BOT_TOKEN, methods=['POST'])
-def getMessage():
-    bot.process_new_updates([telebot.types.Update.de_json(request.get_data().decode('utf-8'))])
-    return "!", 200
-
-@app.route("/")
-def webhook(): return "Bot đang chạy!", 200
-
-if __name__ == "__main__":
-    bot.remove_webhook()
-    if os.environ.get('RENDER_EXTERNAL_URL'):
-        bot.set_webhook(url=f"{os.environ.get('RENDER_EXTERNAL_URL')}/{BOT_TOKEN}")
-    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
+            bot.answer_callback_query(call.id, f"💎 An toàn! +{thuong} xu (Tổ
