@@ -22,8 +22,9 @@ def get_rank(keys):
 def init_db():
     conn = sqlite3.connect('ctv_data.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS ctv (username TEXT PRIMARY KEY, keys INTEGER, rank TEXT, join_date TEXT, quote TEXT, last_checkin TEXT, streak INTEGER, last_wheel TEXT, kudos INTEGER)''')
-    for col in ["join_date TEXT", "quote TEXT", "last_checkin TEXT", "streak INTEGER DEFAULT 0", "last_wheel TEXT", "kudos INTEGER DEFAULT 0"]:
+    # Thêm cột chat_id để lưu ID người dùng
+    c.execute('''CREATE TABLE IF NOT EXISTS ctv (username TEXT PRIMARY KEY, chat_id INTEGER, keys INTEGER, rank TEXT, join_date TEXT, quote TEXT, last_checkin TEXT, streak INTEGER, last_wheel TEXT, kudos INTEGER)''')
+    for col in ["chat_id INTEGER", "join_date TEXT", "quote TEXT", "last_checkin TEXT", "streak INTEGER DEFAULT 0", "last_wheel TEXT", "kudos INTEGER DEFAULT 0"]:
         try: c.execute(f"ALTER TABLE ctv ADD COLUMN {col}")
         except: pass
     conn.commit(); conn.close()
@@ -46,7 +47,15 @@ def get_menu():
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    text = "Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv @ten - Thêm CTV\n/congkey @ten so - Cộng key\n/trukey @ten so - Trừ key\n/xoactv @ten - Xóa CTV\n/thongke - Tổng quan\n/thongbao [nội dung]\n/reset - Reset toàn bộ\n\n🛡 Quản trị nhóm (Cần Reply tin nhắn):\n/kick - Đuổi khỏi nhóm\n/camchat [thời gian] - Cấm chat (VD: 1h, 30m)\n/add - Tạo link mời tham gia" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay - Quay số nhận key\n/diemdanh - Điểm danh hàng ngày\n/profile - Xem thẻ CTV\n/setquote [châm ngôn]\n/khen @ten - Thả tim"
+    # TỰ ĐỘNG LƯU CHAT_ID KHI BẤM /START
+    uname = f"@{message.from_user.username}" if message.from_user.username else None
+    if uname:
+        conn = sqlite3.connect('ctv_data.db')
+        # Cập nhật chat_id nếu người này đã có trong danh sách CTV
+        conn.execute("UPDATE ctv SET chat_id=? WHERE username=?", (message.chat.id, uname))
+        conn.commit(); conn.close()
+
+    text = "Chào Sếp! Bot quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n\n🛠 Lệnh Admin:\n/themctv @ten - Thêm CTV\n/congkey @ten so - Cộng key\n/trukey @ten so - Trừ key\n/xoactv @ten - Xóa CTV\n/thongke - Tổng quan\n/thongbao [nội dung]\n/reset - Reset toàn bộ\n\n🛡 Quản trị nhóm:\n/kick - Đuổi (Cần reply)\n/camchat [tg] - Cấm chat (VD: 1h)\n/add - Tạo link mời" if is_admin(message) else "Chào bạn! Hệ thống quản lý CTV.\n👇 Bấm nút bên dưới hoặc dùng lệnh:\n/vongquay - Quay số nhận key\n/diemdanh - Điểm danh hàng ngày\n/profile - Xem thẻ CTV\n/setquote [châm ngôn]\n/khen @ten - Thả tim"
     try: bot.send_photo(message.chat.id, BANNER_URL, caption=text, parse_mode='HTML', reply_markup=get_menu())
     except Exception as e: 
         print(f"Lỗi ảnh: {e}")
@@ -110,6 +119,9 @@ def xem_info(message):
     uname = f"@{message.from_user.username}" if message.from_user.username else None
     if not uname: return bot.reply_to(message, "❌ Bạn cần tạo Username Telegram!")
     conn = sqlite3.connect('ctv_data.db')
+    # Lưu chat_id luôn khi dùng lệnh info
+    conn.execute("UPDATE ctv SET chat_id=? WHERE username=?", (message.chat.id, uname))
+    conn.commit()
     data = conn.execute("SELECT keys, rank FROM ctv WHERE username=?", (uname,)).fetchone()
     conn.close()
     if not data: return bot.reply_to(message, "❌ Bạn chưa có trong hệ thống!")
@@ -122,6 +134,8 @@ def xem_profile(message):
     uname = f"@{message.from_user.username}" if message.from_user.username else None
     if not uname: return
     conn = sqlite3.connect('ctv_data.db')
+    conn.execute("UPDATE ctv SET chat_id=? WHERE username=?", (message.chat.id, uname))
+    conn.commit()
     data = conn.execute("SELECT keys, rank, join_date, quote, kudos FROM ctv WHERE username=?", (uname,)).fetchone()
     conn.close()
     if not data: return bot.reply_to(message, "❌ Bạn chưa có trong hệ thống!")
@@ -193,13 +207,38 @@ def thong_bao(message):
     txt = message.text.replace('/thongbao', '').strip()
     if not txt: return
     conn = sqlite3.connect('ctv_data.db')
-    users = conn.execute("SELECT username FROM ctv").fetchall()
+    # Lấy cả username và chat_id
+    users = conn.execute("SELECT username, chat_id FROM ctv").fetchall()
     conn.close()
+    
     s, f = 0, 0
+    failed_users = []
+    
     for u in users:
-        try: bot.send_message(u[0], f"📢 <b>THÔNG BÁO</b> 📢\n\n{txt}", parse_mode='HTML'); s += 1; time.sleep(0.1)
-        except: f += 1
-    bot.reply_to(message, f"✅ Gửi thành công: {s}. Thất bại: {f}.")
+        uname, chat_id = u[0], u[1]
+        # Nếu có chat_id thì gửi bằng chat_id (Chuẩn 100%)
+        if chat_id:
+            try: 
+                bot.send_message(chat_id, f"📢 <b>THÔNG BÁO</b> 📢\n\n{txt}", parse_mode='HTML')
+                s += 1
+                time.sleep(0.1)
+            except Exception: 
+                f += 1
+                failed_users.append(uname)
+        else:
+            # Nếu chưa có chat_id (chưa bấm /start) thì thử gửi bằng username (dễ tịt)
+            try:
+                bot.send_message(uname, f"📢 <b>THÔNG BÁO</b> 📢\n\n{txt}", parse_mode='HTML')
+                s += 1
+                time.sleep(0.1)
+            except Exception:
+                f += 1
+                failed_users.append(uname)
+            
+    msg = f"✅ Gửi thành công: {s}.\n❌ Thất bại: {f}."
+    if failed_users:
+        msg += f"\n👉 Chưa bấm /start: {', '.join(failed_users)}"
+    bot.reply_to(message, msg)
 
 @bot.message_handler(commands=['themctv'])
 def them_ctv(message):
@@ -302,7 +341,6 @@ def mute_user(message):
             permissions=perms, 
             until_date=until
         )
-        
         bot.reply_to(message, f"🤐 Đã cấm chat {message.reply_to_message.from_user.first_name} trong {parts[1]}!")
     except Exception as e:
         bot.reply_to(message, f"❌ Lỗi: {e}")
