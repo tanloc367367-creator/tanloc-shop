@@ -340,11 +340,17 @@ def handle_rps(call):
     if not u: return
     k = db_query("SELECT keys FROM ctv WHERE username=?", (u,), fetch='one')[0]
     if k < 3: return bot.answer_callback_query(call.id, "Không đủ key!", show_alert=True)
+    
     p, b = call.data.split('_')[1], random.choice(['bua', 'keo', 'bao'])
     ten = {'bua': '✊ Búa', 'keo': '✌️ Kéo', 'bao': '✋ Bao'}
-    if p == b: new_keys, status = k, "🤝 HÒA"
-        elif (p=='bua' and b=='keo') or (p=='keo' and b=='bao') or (p=='bao' and b=='bua'): new_keys, status = k+3, "🎉 THẮNG (+3)"
-    else: new_keys, status = k-3, "😭 THUA (-3)"
+    
+    if p == b: 
+        new_keys, status = k, "🤝 HÒA"
+    elif (p == 'bua' and b == 'keo') or (p == 'keo' and b == 'bao') or (p == 'bao' and b == 'bua'): 
+        new_keys, status = k + 3, "🎉 THẮNG (+3)"
+    else: 
+        new_keys, status = k - 3, "😭 THUA (-3)"
+        
     nr = update_keys(u, new_keys)
     bot.edit_message_text(f"Bạn: {ten[p]} | Bot: {ten[b]}\n{status}\n🔑 {new_keys} key ({nr})", call.message.chat.id, call.message.message_id, parse_mode='HTML')
     bot.answer_callback_query(call.id)
