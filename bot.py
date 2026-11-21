@@ -296,23 +296,43 @@ def lixi_loai(call):
 
 @bot.message_handler(func=lambda m: m.from_user.id in temp_lixi and m.text.startswith('/'))
 def lixi_nhap(msg):
-    st = temp_lixi[msg.from_user.id]; txt = msg.text.replace('/', '').strip()
-    if not txt.isdigit(): return bot.reply_to(msg, "❌ Nhập số hợp lệ (VD: /100).")
-    val = int(txt); u = get_user(msg)
+    st = temp_lixi[msg.from_user.id]
+    txt = msg.text.replace('/', '').strip()
+    
+    if not txt.isdigit(): 
+        return bot.reply_to(msg, "❌ Nhập số hợp lệ (VD: /100).")
+        
+    val = int(txt)
+    u = get_user(msg)
     if not u: return
+    
     if st['step'] == 2:
-    bal = u[1] if st['loai'] == 'key' else u[2]
-    if bal < val: return bot.reply_to(msg, f"❌ Không đủ {st['loai']}! (Có {bal}).")
-    st['tong'] = val; st['step'] = 3
-    bot.reply_to(msg, f"✅ Tổng: <b>{val} {st['loai']}</b>.\nBước 3: Nhập số người nhận.\n(Cú pháp: <code>/số_người</code>. VD: <code>/5</code>)", parse_mode='HTML')
+        bal = u[1] if st['loai'] == 'key' else u[2]
+        if bal < val: 
+            return bot.reply_to(msg, f"❌ Không đủ {st['loai']}! (Có {bal}).")
+            
+        st['tong'] = val
+        st['step'] = 3
+        bot.reply_to(msg, f"✅ Tổng: <b>{val} {st['loai']}</b>.\nBước 3: Nhập số người nhận.\n(Cú pháp: <code>/số_người</code>. VD: <code>/5</code>)", parse_mode='HTML')
+        
     elif st['step'] == 3:
-    if val <= 0 or val > 100: return bot.reply_to(msg, "❌ Số người 1-100.")
-    st['so_nguoi'] = val; code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)); un = u[0]
-    db("UPDATE ctv SET keys = keys - ? WHERE username=?", (st['tong'], un), c=True) if st['loai'] == 'key' else db("UPDATE ctv SET xu = xu - ? WHERE username=?", (st['tong'], un), c=True)
-    db("INSERT INTO lixi (code, creator, loai, tong, con_lai, so_nguoi) VALUES (?, ?, ?, ?, ?, ?)", (code, un, st['loai'], st['tong'], st['tong'], st['so_nguoi']), c=True)
-    del temp_lixi[msg.from_user.id]
-    bot.reply_to(msg, f"🧧 <b>TẠO THÀNH CÔNG!</b>\n👤 Gửi: {un}\n🎁 Loại: {st['loai'].upper()} (Tổng: {st['tong']})\n👥 Số người: <b>{st['so_nguoi']}</b>\n\n👉 Nhập <code>/bulixi {code}</code> để nhận.\n(Nhanh tay, đủ người túi sẽ đóng!)", parse_mode='HTML')
-
+        if val <= 0 or val > 100: 
+            return bot.reply_to(msg, "❌ Số người phải từ 1 đến 100.")
+            
+        st['so_nguoi'] = val
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        un = u[0]
+        
+        if st['loai'] == 'key': 
+            db("UPDATE ctv SET keys = keys - ? WHERE username=?", (st['tong'], un), c=True)
+        else: 
+            db("UPDATE ctv SET xu = xu - ? WHERE username=?", (st['tong'], un), c=True)
+            
+        db("INSERT INTO lixi (code, creator, loai, tong, con_lai, so_nguoi) VALUES (?, ?, ?, ?, ?, ?)", (code, un, st['loai'], st['tong'], st['tong'], st['so_nguoi']), c=True)
+        del temp_lixi[msg.from_user.id]
+        
+        bot.reply_to(msg, f"🧧 <b>TẠO THÀNH CÔNG!</b>\n👤 Gửi: {un}\n🎁 Loại: {st['loai'].upper()} (Tổng: {st['tong']})\n👥 Số người: <b>{st['so_nguoi']}</b>\n\n👉 Nhập <code>/bulixi {code}</code> để nhận.\n(Nhanh tay, đủ người túi sẽ đóng!)", parse_mode='HTML')
+        
 @bot.message_handler(commands=['bulixi'])
 def nhan_lixi(msg):
     p = msg.text.split()
